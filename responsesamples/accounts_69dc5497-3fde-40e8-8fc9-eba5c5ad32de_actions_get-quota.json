@@ -1,0 +1,24 @@
+{
+  "quota_used": 1541111,
+  "force_idle_until": null,
+  "apps": [
+    {
+      "quota_used": 2318,
+      "app_uuid": "48da7233-34a1-4b1e-888a-cd3166a0ce4a"
+    },
+    {
+      "quota_used": 148272,
+      "app_uuid": "9c2cacfa-082b-45f2-b390-78916918d748"
+    },
+    {
+      "quota_used": 60,
+      "app_uuid": "a2e3ec79-7d37-4d01-ad22-8ed2378aa1af"
+    },
+    {
+      "quota_used": 1390461,
+      "app_uuid": "d57e3263-1cfa-467b-b281-7c77621dad2d"
+    }
+  ],
+  "account_uuid": "69dc5497-3fde-40e8-8fc9-eba5c5ad32de",
+  "account_quota": 1980000
+}

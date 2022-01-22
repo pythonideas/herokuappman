@@ -43,7 +43,7 @@ export function api(endpoint, method, payload, token, accept?) {
           (json) => {
             if (VERBOSE)
               fs.writeFileSync(
-                `responsesamples/${endpoint}.json`,
+                `responsesamples/${endpoint.replace(/\//g, "_")}.json`,
                 JSON.stringify(json, null, 2)
               );
             resolve(json);
@@ -99,10 +99,23 @@ export class HerokuAccount {
       });
     });
   }
+  getQuota() {
+    return new Promise((resolve) => {
+      get(
+        `accounts/${this.id}/actions/get-quota`,
+        undefined,
+        this.token,
+        "application/vnd.heroku+json; version=3.account-quotas"
+      ).then((json: any) => {
+        resolve(json);
+      });
+    });
+  }
   init() {
     return new Promise(async (resolve) => {
       const account = await this.getAccount();
-      resolve({ account });
+      const quota = await this.getQuota();
+      resolve({ account, quota });
     });
   }
 }

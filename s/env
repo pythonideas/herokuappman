@@ -1,0 +1,1 @@
+eval $(node_modules/@browsercapturesalt/config/bin/env)

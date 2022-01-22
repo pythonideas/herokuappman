@@ -94,6 +94,9 @@ export class HerokuApp {
     this.stack = blob.stack.name;
     this.region = blob.region.name;
   }
+  toString(pref: string) {
+    return `${pref}HerokuApp < ${this.name} [ ${this.id} ] ${this.region} used ${this.quotaUsed} >`;
+  }
 }
 
 export class HerokuAccount {
@@ -108,6 +111,14 @@ export class HerokuAccount {
     this.name = name;
     this.envTokenFullName = "HEROKU_TOKEN_" + this.name;
     this.token = process.env[this.envTokenFullName];
+  }
+  toString(pref: string) {
+    const apps = this.apps.length
+      ? `\n${pref}  apps:\n${this.apps
+          .map((app) => "    " + app.toString(pref))
+          .join("\n")}`
+      : "";
+    return `${pref}HerokuAccount < ${this.name} [ ${this.id} , ${this.token} ]\n${pref}  used: ${this.quotaUsed}${apps}\n${pref}>`;
   }
   getAccount() {
     return new Promise((resolve) => {
@@ -149,11 +160,11 @@ export class HerokuAccount {
         try {
           this.getAppById(qApp.app_uuid).quotaUsed = qApp.quota_used;
         } catch (err) {
-          console.warn(
+          /*console.warn(
             `quota app not among account apps`,
             qApp,
             this.apps.map((app) => app.id)
-          );
+          );*/
         }
       }
       this.quotaTotal = quota.account_quota;
@@ -175,12 +186,35 @@ function getAllEnvTokens() {
   return envTokens;
 }
 
+class HerokuAppManager {
+  accounts: HerokuAccount[] = [];
+  constructor() {}
+  toString() {
+    return `HerokuAppManager <\n${this.accounts
+      .map((acc) => acc.toString("  "))
+      .join("\n")}\n>`;
+  }
+  init() {
+    return new Promise(async (resolve) => {
+      this.accounts = getAllEnvTokens().map(
+        (token) => new HerokuAccount(token.name)
+      );
+
+      const initResult = await Promise.all(
+        this.accounts.map((acc) => acc.init())
+      );
+
+      resolve(initResult);
+    });
+  }
+}
+
 async function test() {
-  const accs = getAllEnvTokens().map((token) => new HerokuAccount(token.name));
+  const appMan = new HerokuAppManager();
 
-  const initResult = await Promise.all(accs.map((acc) => acc.init()));
+  const initResult = await appMan.init();
 
-  console.log(JSON.stringify(accs, null, 2));
+  console.log(appMan.toString());
 }
 
 test();

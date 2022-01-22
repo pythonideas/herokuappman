@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
 import fs from "fs";
 
+import { getGitContentJsonDec } from "@browsercapturesalt/config/server/utils";
+
 export { fetch };
 
 const API_BASE_URL = "https://api.heroku.com";
@@ -35,6 +37,10 @@ export function formatDurationMs(dur: number) {
 
 export function formatDuration(sec: number) {
   return formatDurationMs(sec * SECOND);
+}
+
+export function getConfig() {
+  return getGitContentJsonDec("config");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -395,9 +401,13 @@ async function test() {
 
   //result = await appMan.setConfig("appmandummyapp", {FOO:"bar"})
 
-  result = await appMan.getConfig("appmandummyapp");
+  //result = await appMan.getConfig("appmandummyapp");
 
-  console.log(result);
+  result = await getConfig();
+
+  const config = result.content;
+
+  console.log(config);
 }
 
 test();

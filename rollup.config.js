@@ -1,8 +1,9 @@
 import typescript from "rollup-plugin-typescript2";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
+import json from "@rollup/plugin-json";
 
-const plugins = [typescript(), nodeResolve(), commonjs()];
+const plugins = [typescript(), nodeResolve(), commonjs(), json()];
 
 const external = [];
 
@@ -29,9 +30,13 @@ export default [
           "CIRCULAR_DEPENDENCY",
           "UNRESOLVED_IMPORT",
           "MISSING_GLOBAL_NAME",
+          "MISSING_NODE_BUILTINS",
+          "EVAL",
         ].includes(warning.code)
       )
         return;
+
+      console.log(warning.code);
 
       warn(warning);
     },

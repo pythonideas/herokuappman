@@ -6,7 +6,7 @@ const plugins = [typescript(), nodeResolve(), commonjs()];
 
 const external = [];
 
-const name = "appman";
+const name = "herokuappman";
 
 export default [
   // Universal Module Definition, works as amd, cjs and iife all in one

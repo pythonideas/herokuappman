@@ -81,11 +81,29 @@ function patch(endpoint, payload, token, accept?) {
 
 //////////////////////////////////////////////////////////////////////
 
+export class HerokuApp {
+  id: string = "";
+  name: string = "";
+  stack: string = "";
+  region: string = "";
+  quotaUsed: number = 0;
+  parentAccount: HerokuAccount = new HerokuAccount("");
+  constructor(parentAccount: HerokuAccount, blob: any) {
+    this.id = blob.id;
+    this.name = blob.name;
+    this.stack = blob.stack.name;
+    this.region = blob.region.name;
+  }
+}
+
 export class HerokuAccount {
   name: string = "";
   envTokenFullName: string = "";
   token: string = "";
   id: string = "";
+  quotaTotal: number = 0;
+  quotaUsed: number = 0;
+  apps: HerokuApp[] = [];
   constructor(name: string) {
     this.name = name;
     this.envTokenFullName = "HEROKU_TOKEN_" + this.name;
@@ -111,9 +129,13 @@ export class HerokuAccount {
       });
     });
   }
+  getAppById(id: string) {
+    return this.apps.find((app) => app.id === id);
+  }
   getApps() {
     return new Promise((resolve) => {
-      get("apps", undefined, this.token).then((json) => {
+      get("apps", undefined, this.token).then((json: any) => {
+        this.apps = json.map((app) => new HerokuApp(this, app));
         resolve(json);
       });
     });
@@ -121,8 +143,21 @@ export class HerokuAccount {
   init() {
     return new Promise(async (resolve) => {
       const account = await this.getAccount();
-      const quota = await this.getQuota();
+      const quota: any = await this.getQuota();
       const apps = await this.getApps();
+      for (const qApp of quota.apps) {
+        try {
+          this.getAppById(qApp.app_uuid).quotaUsed = qApp.quota_used;
+        } catch (err) {
+          console.warn(
+            `quota app not among account apps`,
+            qApp,
+            this.apps.map((app) => app.id)
+          );
+        }
+      }
+      this.quotaTotal = quota.account_quota;
+      this.quotaUsed = quota.quota_used;
       resolve({ account, quota, apps });
     });
   }
@@ -133,7 +168,7 @@ async function test() {
 
   const initResult = await acc.init();
 
-  console.log(initResult, acc);
+  console.log(acc);
 }
 
 test();

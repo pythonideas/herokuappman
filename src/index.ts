@@ -14,6 +14,29 @@ function log(...args) {
   if (VERBOSE) console.log(...args);
 }
 
+export const SECOND = 1000;
+export const MINUTE = 60 * SECOND;
+export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
+export const MONTH = 30 * DAY;
+export const WEEK = 7 * DAY;
+export const YEAR = 365 * DAY;
+
+export function formatDurationMs(dur: number) {
+  if (dur < SECOND) return `${dur} millisecond(s)`;
+  if (dur < MINUTE) return `${Math.floor((dur / SECOND) * 10) / 10} second(s)`;
+  if (dur < HOUR) return `${Math.floor((dur / MINUTE) * 10) / 10} minute(s)`;
+  if (dur < DAY) return `${Math.floor((dur / HOUR) * 10) / 10} hour(s)`;
+  if (dur < WEEK) return `${Math.floor((dur / DAY) * 10) / 10} day(s)`;
+  if (dur < MONTH) return `${Math.floor((dur / WEEK) * 10) / 10} week(s)`;
+  if (dur < YEAR) return `${Math.floor((dur / MONTH) * 10) / 10} month(s)`;
+  return `${Math.floor((dur / YEAR) * 10) / 10} year(s)`;
+}
+
+export function formatDuration(sec: number) {
+  return formatDurationMs(sec * SECOND);
+}
+
 //////////////////////////////////////////////////////////////////////
 // API primitives
 
@@ -93,9 +116,14 @@ export class HerokuApp {
     this.name = blob.name;
     this.stack = blob.stack.name;
     this.region = blob.region.name;
+    this.parentAccount = parentAccount;
   }
   toString(pref: string) {
-    return `${pref}HerokuApp < ${this.name} [ ${this.id} ] ${this.region} used ${this.quotaUsed} >`;
+    return `${pref}HerokuApp < ${this.name} [ ${this.id} ] ${
+      this.region
+    } used: ${formatDuration(this.quotaUsed)} , remaining: ${formatDuration(
+      this.parentAccount.quotaRemaining()
+    )} >`;
   }
 }
 
@@ -112,13 +140,20 @@ export class HerokuAccount {
     this.envTokenFullName = "HEROKU_TOKEN_" + this.name;
     this.token = process.env[this.envTokenFullName];
   }
+  quotaRemaining() {
+    return this.quotaTotal - this.quotaUsed;
+  }
   toString(pref: string) {
     const apps = this.apps.length
       ? `\n${pref}  apps:\n${this.apps
           .map((app) => "    " + app.toString(pref))
           .join("\n")}`
       : "";
-    return `${pref}HerokuAccount < ${this.name} [ ${this.id} , ${this.token} ]\n${pref}  used: ${this.quotaUsed}${apps}\n${pref}>`;
+    return `${pref}HerokuAccount < ${this.name} [ ${this.id} , ${
+      this.token
+    } ]\n${pref}  used: ${formatDuration(
+      this.quotaUsed
+    )} , remaining: ${formatDuration(this.quotaRemaining())}${apps}\n${pref}>`;
   }
   getAccount() {
     return new Promise((resolve) => {

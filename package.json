@@ -9,6 +9,7 @@
     "typescript": "^4.5.5"
   },
   "scripts": {
+    "r": "node dist/index.js",
     "build": "rollup -c",
     "watch": "rollup -c --watch",
     "pretty": "prettier -w rollup.config.js src/index.ts package.json tsconfig.json"

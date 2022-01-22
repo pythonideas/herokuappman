@@ -118,6 +118,28 @@ export class HerokuApp {
     this.region = blob.region.name;
     this.parentAccount = parentAccount;
   }
+  setConfig(config) {
+    return new Promise((resolve) => {
+      patch(
+        `apps/${this.name}/config-vars`,
+        config,
+        this.parentAccount.token
+      ).then((result: any) => {
+        resolve(result);
+      });
+    });
+  }
+  getConfig() {
+    return new Promise((resolve) => {
+      get(
+        `apps/${this.name}/config-vars`,
+        undefined,
+        this.parentAccount.token
+      ).then((result: any) => {
+        resolve(result);
+      });
+    });
+  }
   toString(pref: string) {
     return `${pref}HerokuApp < ${this.name} [ ${this.id} ] ${
       this.region
@@ -280,6 +302,38 @@ class HerokuAppManager {
     const apps = this.accounts.map((acc) => acc.apps).flat();
     return apps;
   }
+  getAppByName(name: string) {
+    const app = this.allApps().find((app) => app.name === name);
+    return app;
+  }
+  setConfig(name: string, config: any) {
+    const app = this.getAppByName(name);
+    return new Promise((resolve) => {
+      if (app) {
+        app.setConfig(config).then((result: any) => {
+          resolve(result);
+        });
+      } else {
+        resolve({
+          error: "no such app",
+        });
+      }
+    });
+  }
+  getConfig(name: string) {
+    const app = this.getAppByName(name);
+    return new Promise((resolve) => {
+      if (app) {
+        app.getConfig().then((result: any) => {
+          resolve(result);
+        });
+      } else {
+        resolve({
+          error: "no such app",
+        });
+      }
+    });
+  }
   getAccountByAppName(name: string) {
     const app = this.allApps().find((app) => app.name === name);
     if (app) {
@@ -327,17 +381,21 @@ async function test() {
 
   const initResult = await appMan.init();
 
-  let result;
+  let result, acc;
 
-  /*result = await appMan.createApp("BROWSERCAPTURES", {
+  result = await appMan.createApp("BROWSERCAPTURES", {
     name: "appmandummyapp",
-  });*/
+  });
 
-  //const result = await appMan.deleteApp("appmandummyapp")
+  //result = await appMan.deleteApp("appmandummyapp")
 
-  const acc = appMan.getAccountByName("BROWSERCAPTURES");
+  //acc = appMan.getAccountByName("BROWSERCAPTURES");
 
-  result = await acc.deleteApp("appmandummyapp");
+  //result = await acc.deleteApp("appmandummyapp");
+
+  //result = await appMan.setConfig("appmandummyapp", {FOO:"bar"})
+
+  result = await appMan.getConfig("appmandummyapp");
 
   console.log(result);
 }

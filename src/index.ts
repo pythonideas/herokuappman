@@ -10,6 +10,12 @@ const DEFAULT_ACCEPT = "application/vnd.heroku+json; version=3";
 
 const MAX_APPS = 5;
 
+const APP_CONF = JSON.parse(fs.readFileSync("appconf.json").toString());
+
+function getAppConf(name) {
+  return APP_CONF.apps[name];
+}
+
 let VERBOSE = false;
 
 function log(...args) {
@@ -108,6 +114,25 @@ function patch(endpoint, payload, token, accept?) {
 
 //////////////////////////////////////////////////////////////////////
 
+function awaitCompletion(resolve, func, triesLeft, stepOpt?) {
+  const step = stepOpt || 0;
+  if (triesLeft <= 0) {
+    resolve({ error: "timed out" });
+  } else {
+    console.log("awaiting step", step, "tries left", triesLeft);
+    func().then((result: any) => {
+      if (result.done) {
+        resolve(result);
+      } else {
+        setTimeout(
+          () => awaitCompletion(resolve, func, triesLeft - 1, step + 1),
+          10000
+        );
+      }
+    });
+  }
+}
+
 //////////////////////////////////////////////////////////////////////
 
 export class HerokuApp {
@@ -123,6 +148,58 @@ export class HerokuApp {
     this.stack = blob.stack.name;
     this.region = blob.region.name;
     this.parentAccount = parentAccount;
+  }
+  build(url) {
+    console.log("starting build", this.name, this.parentAccount.name, url);
+    return new Promise((resolve) => {
+      post(
+        `apps/${this.name}/builds`,
+        {
+          source_blob: {
+            checksum: null,
+            url,
+            version: null,
+          },
+        },
+        this.parentAccount.token
+      ).then((result: any) => {
+        resolve(result);
+      });
+    });
+  }
+  getBuild(id: string) {
+    return new Promise((resolve) => {
+      get(
+        `apps/${this.name}/builds/${id}`,
+        undefined,
+        this.parentAccount.token
+      ).then((result: any) => {
+        resolve(result);
+      });
+    });
+  }
+  awaitBuild(url) {
+    return new Promise((resolve) => {
+      this.build(url).then((result: any) => {
+        const id = result.id;
+
+        awaitCompletion(
+          resolve,
+          () => {
+            return new Promise((resolve) => {
+              this.getBuild(id).then((result: any) => {
+                if (result.status === "pending") {
+                  resolve({ done: false });
+                } else {
+                  resolve({ done: result });
+                }
+              });
+            });
+          },
+          30
+        );
+      });
+    });
   }
   getBuilds() {
     return new Promise((resolve) => {
@@ -403,38 +480,68 @@ class HerokuAppManager {
       resolve(initResult);
     });
   }
+  deployApp(name) {
+    return new Promise(async (resolve) => {
+      const app = this.getAppByName(name);
+
+      if (!app) {
+        resolve({ error: "no such app" });
+        return;
+      }
+
+      const appConf = getAppConf("appmandummyapp");
+
+      if (!appConf) {
+        resolve({ error: "no conf for app" });
+        return;
+      }
+
+      const targzUrl = appConf.targzUrl;
+
+      if (!targzUrl) {
+        resolve({ error: "no targz url for app" });
+        return;
+      }
+
+      const preferredAccount = appConf.preferredAccount;
+
+      if (!preferredAccount) {
+        resolve({ error: "no preferred account for app" });
+        return;
+      }
+
+      const createAppResult = await this.createApp(preferredAccount, {
+        name,
+      });
+
+      const initResult = await this.init();
+
+      const getConfigResult = await getConfig();
+
+      const config = getConfigResult.content;
+
+      if (!config) {
+        resolve({ error: "could not get config for app" });
+        return;
+      }
+
+      const setConfigResult = await this.setConfig(name, config);
+
+      const awaitBuildResult = await app.awaitBuild(targzUrl);
+
+      resolve(awaitBuildResult);
+    });
+  }
 }
 
 async function test() {
   const appMan = new HerokuAppManager();
 
-  const initResult = await appMan.init();
+  await appMan.init();
 
-  console.log(appMan.toString());
+  const deployResult = await appMan.deployApp("appmandummyapp");
 
-  let result, acc;
-
-  /*result = await appMan.createApp("BROWSERCAPTURES", {
-    name: "appmandummyapp",
-  });*/
-
-  //result = await appMan.deleteApp("appmandummyapp")
-
-  //acc = appMan.getAccountByName("BROWSERCAPTURES");
-
-  //result = await acc.deleteApp("appmandummyapp");
-
-  //result = await appMan.setConfig("appmandummyapp", {FOO:"bar"})
-
-  //result = await appMan.getConfig("appmandummyapp");
-
-  /*result = await getConfig();
-
-  const config = result.content;*/
-
-  result = await appMan.getBuilds("apinomadicapp");
-
-  console.log(result);
+  console.log(deployResult);
 }
 
 test();

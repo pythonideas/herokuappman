@@ -1,0 +1,12 @@
+{
+    "apps": {
+        "appmandummyapp": {
+            "preferredAccount": "BROWSERCAPTURES",
+            "allowedAccounts": [
+                "BROWSERCAPTURES",
+                "BROWSERCAPTURESALT"
+            ],
+            "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/config.tar.gz?raw=true"
+        }
+    }
+}

@@ -148,8 +148,29 @@ export class HerokuAccount {
   }
   createApp(cap: CreateAppParams) {
     return new Promise((resolve) => {
-      post("apps", cap, this.token).then((json) => {
-        resolve(json);
+      post("apps", cap, this.token).then((result: any) => {
+        if (result.id === "invalid_params") {
+          resolve({
+            error: "invalid params",
+            message: result.message,
+          });
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  }
+  deleteApp(name: string) {
+    return new Promise((resolve) => {
+      del(`apps/${name}`, undefined, this.token).then((result: any) => {
+        if (result.id === "not_found") {
+          resolve({
+            error: "not found",
+            message: result.message,
+          });
+        } else {
+          resolve(result);
+        }
       });
     });
   }
@@ -246,18 +267,37 @@ class HerokuAppManager {
     return new Promise((resolve) => {
       if (acc) {
         acc.createApp(cap).then((result: any) => {
-          if (result.id === "invalid_params") {
-            resolve({
-              error: "invalid params",
-              message: result.message,
-            });
-          } else {
-            resolve(result);
-          }
+          resolve(result);
         });
       } else {
         resolve({
           error: "no such account",
+        });
+      }
+    });
+  }
+  allApps() {
+    const apps = this.accounts.map((acc) => acc.apps).flat();
+    return apps;
+  }
+  getAccountByAppName(name: string) {
+    const app = this.allApps().find((app) => app.name === name);
+    if (app) {
+      return app.parentAccount;
+    } else {
+      return undefined;
+    }
+  }
+  deleteApp(name: string) {
+    const acc = this.getAccountByAppName(name);
+    return new Promise((resolve) => {
+      if (acc) {
+        acc.deleteApp(name).then((result: any) => {
+          resolve(result);
+        });
+      } else {
+        resolve({
+          error: "no such app",
         });
       }
     });
@@ -287,9 +327,17 @@ async function test() {
 
   const initResult = await appMan.init();
 
-  const result = await appMan.createApp("BROWSERCAPTURES", {
+  let result;
+
+  /*result = await appMan.createApp("BROWSERCAPTURES", {
     name: "appmandummyapp",
-  });
+  });*/
+
+  //const result = await appMan.deleteApp("appmandummyapp")
+
+  const acc = appMan.getAccountByName("BROWSERCAPTURES");
+
+  result = await acc.deleteApp("appmandummyapp");
 
   console.log(result);
 }

@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import fs from "fs";
 
 export { fetch };
 
@@ -39,7 +40,14 @@ export function api(endpoint, method, payload, token, accept?) {
     }).then(
       (resp) =>
         resp.json().then(
-          (json) => resolve(json),
+          (json) => {
+            if (VERBOSE)
+              fs.writeFileSync(
+                `responsesamples/${endpoint}.json`,
+                JSON.stringify(json, null, 2)
+              );
+            resolve(json);
+          },
           (err) => {
             console.error(err);
             reject(err);

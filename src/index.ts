@@ -124,6 +124,15 @@ export class HerokuApp {
     this.region = blob.region.name;
     this.parentAccount = parentAccount;
   }
+  getBuilds() {
+    return new Promise((resolve) => {
+      get(`apps/${this.name}/builds`, undefined, this.parentAccount.token).then(
+        (json) => {
+          resolve(json);
+        }
+      );
+    });
+  }
   setConfig(config) {
     return new Promise((resolve) => {
       patch(
@@ -340,6 +349,20 @@ class HerokuAppManager {
       }
     });
   }
+  getBuilds(name: string) {
+    const app = this.getAppByName(name);
+    return new Promise((resolve) => {
+      if (app) {
+        app.getBuilds().then((result: any) => {
+          resolve(result);
+        });
+      } else {
+        resolve({
+          error: "no such app",
+        });
+      }
+    });
+  }
   getAccountByAppName(name: string) {
     const app = this.allApps().find((app) => app.name === name);
     if (app) {
@@ -387,11 +410,13 @@ async function test() {
 
   const initResult = await appMan.init();
 
+  console.log(appMan.toString());
+
   let result, acc;
 
-  result = await appMan.createApp("BROWSERCAPTURES", {
+  /*result = await appMan.createApp("BROWSERCAPTURES", {
     name: "appmandummyapp",
-  });
+  });*/
 
   //result = await appMan.deleteApp("appmandummyapp")
 
@@ -403,11 +428,13 @@ async function test() {
 
   //result = await appMan.getConfig("appmandummyapp");
 
-  result = await getConfig();
+  /*result = await getConfig();
 
-  const config = result.content;
+  const config = result.content;*/
 
-  console.log(config);
+  result = await appMan.getBuilds("apinomadicapp");
+
+  console.log(result);
 }
 
 test();

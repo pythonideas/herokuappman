@@ -211,12 +211,26 @@ export class HerokuApp {
     });
   }
   setConfig(config) {
+    const numKeys = Object.keys(config).length;
+    console.log("setting config", this.name, numKeys, "keys");
     return new Promise((resolve) => {
       patch(
         `apps/${this.name}/config-vars`,
         config,
         this.parentAccount.token
       ).then((result: any) => {
+        if (typeof result === "object") {
+          const setNumKeys = Object.keys(result).length;
+          console.log(
+            "set config result",
+            this.name,
+            setNumKeys,
+            "keys",
+            setNumKeys >= numKeys ? "ok" : "failed"
+          );
+        } else {
+          console.error("set config result is not object", this.name, result);
+        }
         resolve(result);
       });
     });
@@ -261,14 +275,17 @@ export class HerokuAccount {
     this.token = process.env[this.envTokenFullName];
   }
   createApp(cap: CreateAppParams) {
+    console.log("creating app", cap);
     return new Promise((resolve) => {
       post("apps", cap, this.token).then((result: any) => {
         if (result.id === "invalid_params") {
+          console.warn("could not create app", cap, result.message);
           resolve({
             error: "invalid params",
             message: result.message,
           });
         } else {
+          console.log("created app", cap);
           resolve(result);
         }
       });

@@ -127,6 +127,12 @@ export class HerokuApp {
   }
 }
 
+export type CreateAppParams = {
+  name: string;
+  region?: string;
+  stack?: string;
+};
+
 export class HerokuAccount {
   name: string = "";
   envTokenFullName: string = "";
@@ -139,6 +145,13 @@ export class HerokuAccount {
     this.name = name;
     this.envTokenFullName = "HEROKU_TOKEN_" + this.name;
     this.token = process.env[this.envTokenFullName];
+  }
+  createApp(cap: CreateAppParams) {
+    return new Promise((resolve) => {
+      post("apps", cap, this.token).then((json) => {
+        resolve(json);
+      });
+    });
   }
   quotaRemaining() {
     return this.quotaTotal - this.quotaUsed;
@@ -224,6 +237,31 @@ function getAllEnvTokens() {
 class HerokuAppManager {
   accounts: HerokuAccount[] = [];
   constructor() {}
+  getAccountByName(name: string) {
+    const acc = this.accounts.find((acc) => acc.name === name);
+    return acc;
+  }
+  createApp(accountName: string, cap: CreateAppParams) {
+    const acc = this.getAccountByName(accountName);
+    return new Promise((resolve) => {
+      if (acc) {
+        acc.createApp(cap).then((result: any) => {
+          if (result.id === "invalid_params") {
+            resolve({
+              error: "invalid params",
+              message: result.message,
+            });
+          } else {
+            resolve(result);
+          }
+        });
+      } else {
+        resolve({
+          error: "no such account",
+        });
+      }
+    });
+  }
   toString() {
     return `HerokuAppManager <\n${this.accounts
       .map((acc) => acc.toString("  "))
@@ -249,7 +287,11 @@ async function test() {
 
   const initResult = await appMan.init();
 
-  console.log(appMan.toString());
+  const result = await appMan.createApp("BROWSERCAPTURES", {
+    name: "appmandummyapp",
+  });
+
+  console.log(result);
 }
 
 test();

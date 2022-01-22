@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    //https://www.typescriptlang.org/tsconfig#lib
+    "lib": ["ES2015"],
+    "allowJs": true
+  }
+}

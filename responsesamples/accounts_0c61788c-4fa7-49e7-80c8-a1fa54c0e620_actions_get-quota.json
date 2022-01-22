@@ -1,0 +1,12 @@
+{
+  "quota_used": 403201,
+  "force_idle_until": null,
+  "apps": [
+    {
+      "quota_used": 403201,
+      "app_uuid": "872b2042-7723-4f4e-8e85-8d1f20ad388e"
+    }
+  ],
+  "account_uuid": "0c61788c-4fa7-49e7-80c8-a1fa54c0e620",
+  "account_quota": 1980000
+}

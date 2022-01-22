@@ -1,0 +1,40 @@
+{
+  "quota_used": 54472,
+  "force_idle_until": null,
+  "apps": [
+    {
+      "quota_used": 2241,
+      "app_uuid": "07ec186f-9d24-4bf3-acfa-2af8930456c7"
+    },
+    {
+      "quota_used": 3356,
+      "app_uuid": "284a1134-32fd-48d4-a8e1-d68b20317e38"
+    },
+    {
+      "quota_used": 13424,
+      "app_uuid": "5df1dd13-87b0-4adc-98a3-7333a291e4e5"
+    },
+    {
+      "quota_used": 2501,
+      "app_uuid": "747884ea-02d9-4de5-9ef6-09bd2277f819"
+    },
+    {
+      "quota_used": 7322,
+      "app_uuid": "9edc0428-7f9c-4944-b061-fceba158d72e"
+    },
+    {
+      "quota_used": 2014,
+      "app_uuid": "acdc1ca5-b105-4c27-9d45-435efc65fa55"
+    },
+    {
+      "quota_used": 9641,
+      "app_uuid": "d59eb7e1-da6d-4ef0-8688-6ad323803e0f"
+    },
+    {
+      "quota_used": 13973,
+      "app_uuid": "dc5e431e-05b6-4876-a344-1beff48420c8"
+    }
+  ],
+  "account_uuid": "6ff85690-d3b2-42fd-9dfb-f27fb23672f5",
+  "account_quota": 1980000
+}

@@ -1,0 +1,48 @@
+{
+  "quota_used": 389326,
+  "force_idle_until": null,
+  "apps": [
+    {
+      "quota_used": 13154,
+      "app_uuid": "1b9d8057-e09f-4e39-92c4-1726c71ad6a3"
+    },
+    {
+      "quota_used": 4331,
+      "app_uuid": "2b241acc-d82c-4ac3-b3cf-384d69a73067"
+    },
+    {
+      "quota_used": 120694,
+      "app_uuid": "42e5e9f0-4f47-4118-82b8-68c72e8e54ec"
+    },
+    {
+      "quota_used": 25,
+      "app_uuid": "7f3c9cbf-7f3e-4c53-ae15-6d8dccdc680c"
+    },
+    {
+      "quota_used": 56,
+      "app_uuid": "8175635b-ae0f-40f5-864a-1c61ab484bb4"
+    },
+    {
+      "quota_used": 233086,
+      "app_uuid": "8c85aa8b-1ee6-4ab1-b835-7b30f59be357"
+    },
+    {
+      "quota_used": 2974,
+      "app_uuid": "9da050a7-488a-43bf-baa5-3a51531e5e62"
+    },
+    {
+      "quota_used": 14582,
+      "app_uuid": "bdab63f0-ae10-4129-9d6e-e056abc53420"
+    },
+    {
+      "quota_used": 302,
+      "app_uuid": "de83f94f-ef3e-4eb6-a466-fa0ef37667b3"
+    },
+    {
+      "quota_used": 122,
+      "app_uuid": "e30e493d-76d2-4149-be32-29a3f0db7aee"
+    }
+  ],
+  "account_uuid": "e8157807-4598-468b-b0c2-ef96f360e378",
+  "account_quota": 1980000
+}

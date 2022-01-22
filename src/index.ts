@@ -8,7 +8,7 @@ const DEFAULT_ACCEPT = "application/vnd.heroku+json; version=3";
 
 const MAX_APPS = 5;
 
-let VERBOSE = true;
+let VERBOSE = false;
 
 function log(...args) {
   if (VERBOSE) console.log(...args);
@@ -163,12 +163,24 @@ export class HerokuAccount {
   }
 }
 
+function getAllEnvTokens() {
+  const envTokenKeys = Object.keys(process.env).filter((key) =>
+    key.match(/^HEROKU_TOKEN_/)
+  );
+  const envTokens = envTokenKeys.map((key) => ({
+    key,
+    name: key.split("_")[2],
+    token: process.env[key],
+  }));
+  return envTokens;
+}
+
 async function test() {
-  const acc = new HerokuAccount("HYPERBOTAUTHORALT");
+  const accs = getAllEnvTokens().map((token) => new HerokuAccount(token.name));
 
-  const initResult = await acc.init();
+  const initResult = await Promise.all(accs.map((acc) => acc.init()));
 
-  console.log(acc);
+  console.log(JSON.stringify(accs, null, 2));
 }
 
 test();

@@ -111,17 +111,25 @@ export class HerokuAccount {
       });
     });
   }
+  getApps() {
+    return new Promise((resolve) => {
+      get("apps", undefined, this.token).then((json) => {
+        resolve(json);
+      });
+    });
+  }
   init() {
     return new Promise(async (resolve) => {
       const account = await this.getAccount();
       const quota = await this.getQuota();
-      resolve({ account, quota });
+      const apps = await this.getApps();
+      resolve({ account, quota, apps });
     });
   }
 }
 
 async function test() {
-  const acc = new HerokuAccount("BROWSERCAPTURES");
+  const acc = new HerokuAccount("HYPERBOTAUTHORALT");
 
   const initResult = await acc.init();
 

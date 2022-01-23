@@ -1,3 +1,5 @@
+. s/env
+
 node s/bump.js
 
 s/p "$*"
@@ -5,3 +7,5 @@ s/p "$*"
 s/auth
 
 npm publish --access=public
+
+node dist/index.js deploy

@@ -575,7 +575,16 @@ class HerokuAppManager {
       strategy.selectionStrategy || DEFAULT_SELECTION_STRATEGY;
     const setConfigStrategy =
       strategy.setConfigStrategy || DEFAULT_SET_CONFIG_STRATEGY;
+    console.log(
+      "deploying app",
+      name,
+      migrationStrategy,
+      selectionStrategy,
+      setConfigStrategy
+    );
     return new Promise(async (resolve) => {
+      console.log("getting app conf", name);
+
       const appConf = getAppConf(name);
 
       if (!appConf) {
@@ -583,12 +592,16 @@ class HerokuAppManager {
         return;
       }
 
+      console.log("getting targz url", name);
+
       const targzUrl = appConf.targzUrl;
 
       if (!targzUrl) {
         resolve({ error: "no targz url for app" });
         return;
       }
+
+      console.log("getting deploy account", name);
 
       let account = strategy.deployTo;
 
@@ -624,6 +637,8 @@ class HerokuAppManager {
         return;
       }
 
+      console.log("getting config", name);
+
       let config = LOCAL_CONFIG;
 
       if (setConfigStrategy !== "local") {
@@ -641,9 +656,13 @@ class HerokuAppManager {
         }
       }
 
+      console.log("migrating", name);
+
       const existingApp = this.allApps().find((app) => app.name === name);
 
       if (existingApp) {
+        console.log("already exists", name);
+
         const existingAccountName = existingApp.parentAccount.name;
 
         if (existingAccountName !== account) {
@@ -662,6 +681,8 @@ class HerokuAppManager {
         }
       }
 
+      console.log("creating", name);
+
       const createAppResult = await this.createApp(account, {
         name,
       });
@@ -675,7 +696,11 @@ class HerokuAppManager {
         return;
       }
 
+      console.log("setting config", name);
+
       const setConfigResult = await this.setConfig(name, config);
+
+      console.log("building", name);
 
       const awaitBuildResult: any = await app.awaitBuild(targzUrl);
 
@@ -730,11 +755,6 @@ export async function interpreter(argv) {
 
   if (command === "deploy") {
     const name = argv.name;
-
-    if (!name) {
-      console.error("no app specified for deploy");
-      return;
-    }
 
     const strategy: DeployStrategy = {
       migrationStrategy: argv.migrate,

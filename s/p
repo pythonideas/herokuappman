@@ -8,4 +8,3 @@ git push --set-upstream origin main
 
 s/archive
 
-node dist/index.js deploy --name appmandummyapp

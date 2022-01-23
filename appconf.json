@@ -1,12 +1,67 @@
 {
-    "apps": {
-        "appmandummyapp": {
-            "preferredAccount": "BROWSERCAPTURES",
-            "allowedAccounts": [
-                "BROWSERCAPTURES",
-                "BROWSERCAPTURESALT"
-            ],
-            "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/config.tar.gz?raw=true"
-        }
+  "apps": {
+    "appmandummyapp": {
+      "preferredAccount": "BROWSERCAPTURES",
+      "allowedAccounts": [
+        "BROWSERCAPTURES",
+        "BROWSERCAPTURESALT"
+      ],
+      "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/config.tar.gz?raw=true"
     }
+  },
+  "config": [
+    "HEROKU_TOKEN_BROWSERCAPTURES",
+    "AMGILP_DISCORD_BOT_TOKEN",
+    "SACCKEY0",
+    "SACCKEY1",
+    "DISCORD_CLIENT_ID",
+    "HYPER_LICHESS_BOT_CLIENT_ID",
+    "HEROKUTARGZBUILD_TARGZURL",
+    "SACCKEY3",
+    "MIN_INITIAL_CLOCK",
+    "DISCORD_BOT_TOKEN",
+    "AMGILP_DISCORD_BOT_CLIEND_ID",
+    "RESAVE",
+    "ALLOW_SERVER_ENGINE",
+    "EASYCHESS_GITHUB_TOKEN",
+    "TICK_INTERVAL",
+    "GITHUB_CLIENT_SECRET",
+    "HYPER_LICHESS_BOT_CLIENT_SECRET",
+    "BROWSERCAPTURESALT_NPM_TOKEN",
+    "ADMIN_PASS",
+    "HEROKU_TOKEN_RUSTBOTCHESSAPP",
+    "HYPER_SITE_HOST",
+    "BOT_COOKIE",
+    "HYPER_GITHUB_TOKEN",
+    "LICHESS_CLIENT_ID",
+    "HEROKU_TOKEN_HYPERBOTAUTHORALT",
+    "LICHESS_BOT_CLIENT_SECRET",
+    "HEROKU_TOKEN_HYPERCHESSBOT",
+    "HEROKU_TOKEN_BROWSERCAPTURESALT",
+    "PASSWORD",
+    "MIGRATE_APPS",
+    "LEADERBOARD_FILE",
+    "SAVE_UNINITIALIZED",
+    "EXPRESSMIN_GITHUB_TOKEN",
+    "HEROKU_TOKEN",
+    "HEROKU_TOKEN_EASYCHESSANIMATIONS",
+    "QUERY_INTERVAL",
+    "SKIP_TOURNEYWATCH",
+    "BOT_TOKEN",
+    "TARGZBUILD_APPNAME",
+    "FORGET_DELAY",
+    "LOG_DISCORD",
+    "LICHESS_CLIENT_SECRET",
+    "MONGODB_URI",
+    "LICHESS_BOT_CLIENT_ID",
+    "HEROKU_TOKEN_HYPERCHESSBOTAUTHOR",
+    "DISCORD_CLIENT_SECRET",
+    "GITHUB_CLIENT_ID",
+    "HEROKU_TOKEN_AESTHETICBOOKSHELF",
+    "RATE_MAX",
+    "SACCKEY2",
+    "MIGRATE_DELAY",
+    "HEROKU_TOKEN_AESTHETICBOOKSHELFALT",
+    "HEROKU_TOKEN_RUSTBOTALT"
+  ]
 }

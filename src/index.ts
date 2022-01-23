@@ -5,6 +5,8 @@ import { getGitContentJsonDec } from "@browsercapturesalt/config/server/utils";
 
 export { fetch };
 
+const argv = require("minimist")(process.argv.slice(2));
+
 const API_BASE_URL = "https://api.heroku.com";
 const DEFAULT_ACCEPT = "application/vnd.heroku+json; version=3";
 
@@ -551,6 +553,25 @@ class HerokuAppManager {
   }
 }
 
+function interpreter(argv) {
+  const command = argv._[0];
+
+  if (command === "config") {
+    getConfig().then((result) => {
+      const config = result.content;
+      if (config) {
+        const keys = Object.keys(config);
+        APP_CONF["config"] = keys;
+        fs.writeFileSync("appconf.json", JSON.stringify(APP_CONF, null, 2));
+        console.log(keys);
+        console.log("written", keys.length, "keys");
+      } else {
+        console.error("could not obtain config", result);
+      }
+    });
+  }
+}
+
 async function test() {
   const appMan = new HerokuAppManager();
 
@@ -561,4 +582,8 @@ async function test() {
   console.log(deployResult);
 }
 
-test();
+//test();
+
+if (require.main === module) {
+  interpreter(argv);
+}

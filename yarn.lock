@@ -2046,7 +2046,7 @@ vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-vue@^3.2.27:
+vue@^3.2.27, vue@^3.2.28:
   version "3.2.28"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.2.28.tgz#840d193bf9713f57a365ef115c4b1286d43e0e5d"
   integrity sha512-U+jBwVh3RQ9AgceLFdT7i2FFujoC+kYuGrKo5y8aLluWKZWPS40WgA2pyYHaiSX9ydCbEGr3rc/JzdqskzD95g==

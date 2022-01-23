@@ -1,0 +1,6 @@
+{
+    "watch": [
+        "dist/index.js",
+        "views/index.html"
+    ]
+}

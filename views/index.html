@@ -1,0 +1,32 @@
+<style></style>
+
+<script src="/vue.js"></script>
+<script src="/utils.js"></script>
+
+<div id="app">
+  {{ welcome }}
+  <hr />
+  <button @click="setadminpass">Set Admin Pass</button>
+  <hr />
+</div>
+
+<script>
+  Vue.createApp({
+    computed: {},
+    methods: {
+      setadminpass() {
+        const pass = window.prompt("Admin Pass");
+        localStorage.setItem("ADMIN_PASS", pass);
+        document.location.reload();
+      },
+    },
+    data() {
+      return {
+        welcome: "Welcome to Express Min !",
+      };
+    },
+    mounted() {},
+  }).mount("#app");
+
+  hotReload();
+</script>

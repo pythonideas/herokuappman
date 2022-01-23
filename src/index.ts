@@ -5,6 +5,8 @@ import { getGitContentJsonDec } from "@browsercapturesalt/config/server/utils";
 
 export { fetch };
 
+import { startServer } from "./server";
+
 const argv = require("minimist")(process.argv.slice(2));
 
 const API_BASE_URL = "https://api.heroku.com";
@@ -706,6 +708,12 @@ export async function interpreter(argv) {
 
   if (command === "delete") {
     const deleteResult = await appMan.deleteApp(argv.name);
+
+    return;
+  }
+
+  if (command === "serve") {
+    startServer();
 
     return;
   }

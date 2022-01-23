@@ -14,6 +14,12 @@ const MAX_APPS = 5;
 
 const APP_CONF = JSON.parse(fs.readFileSync("appconf.json").toString());
 
+const LOCAL_CONFIG = {};
+
+if (APP_CONF.config) {
+  for (const key of APP_CONF.config) LOCAL_CONFIG[key] = process.env[key];
+}
+
 function getAppConf(name) {
   return APP_CONF.apps[name];
 }
@@ -136,6 +142,19 @@ function awaitCompletion(resolve, func, triesLeft, stepOpt?) {
 }
 
 //////////////////////////////////////////////////////////////////////
+
+export type MigrationStrategy = "external" | "internal" | "disabled";
+const DEFAULT_MIGRATION_STRATEGY = "external";
+export type SelectionStrategy = "preferred" | "best" | "manual";
+const DEFAULT_SELECTION_STRATEGY = "preferred";
+export type SetConfigStrategy = "remote" | "fallback" | "local";
+const DEFAULT_SET_CONFIG_STRATEGY = "fallback";
+export type DeployStrategy = {
+  migrationStrategy?: MigrationStrategy;
+  selectionStrategy?: SelectionStrategy;
+  setConfigStrategy?: SetConfigStrategy;
+  deployTo?: string;
+};
 
 export class HerokuApp {
   id: string = "";
@@ -396,6 +415,7 @@ class HerokuAppManager {
     return acc;
   }
   createApp(accountName: string, cap: CreateAppParams) {
+    console.log("creating app", accountName, cap);
     const acc = this.getAccountByName(accountName);
     return new Promise((resolve) => {
       if (acc) {
@@ -487,6 +507,7 @@ class HerokuAppManager {
       .join("\n")}\n>`;
   }
   init() {
+    console.log("initializing app manager");
     return new Promise(async (resolve) => {
       this.accounts = getAllEnvTokens().map(
         (token) => new HerokuAccount(token.name)
@@ -496,18 +517,26 @@ class HerokuAppManager {
         this.accounts.map((acc) => acc.init())
       );
 
+      console.log(
+        "initialized",
+        initResult.length,
+        "account(s)",
+        this.allApps().length,
+        "app(s)"
+      );
+
       resolve(initResult);
     });
   }
-  deployApp(name) {
+  deployApp(name, strategyOpt: DeployStrategy) {
+    const strategy = strategyOpt || {};
+    const migrationStrategy =
+      strategy.migrationStrategy || DEFAULT_MIGRATION_STRATEGY;
+    const selectionStrategy =
+      strategy.selectionStrategy || DEFAULT_SELECTION_STRATEGY;
+    const setConfigStrategy =
+      strategy.setConfigStrategy || DEFAULT_SET_CONFIG_STRATEGY;
     return new Promise(async (resolve) => {
-      const app = this.getAppByName(name);
-
-      if (!app) {
-        resolve({ error: "no such app" });
-        return;
-      }
-
       const appConf = getAppConf("appmandummyapp");
 
       if (!appConf) {
@@ -522,25 +551,90 @@ class HerokuAppManager {
         return;
       }
 
-      const preferredAccount = appConf.preferredAccount;
+      let account = strategy.deployTo;
 
-      if (!preferredAccount) {
-        resolve({ error: "no preferred account for app" });
+      if (selectionStrategy === "preferred") {
+        const preferredAccount = appConf.preferredAccount;
+
+        if (!preferredAccount) {
+          resolve({ error: "no preferred account for app" });
+          return;
+        }
+
+        account = preferredAccount;
+      } else if (selectionStrategy === "best") {
+        const allowedAccountNames =
+          appConf.allowedAccounts || this.accounts.map((acc) => acc.name);
+        const allowedAccounts = this.accounts
+          .filter((acc) =>
+            allowedAccountNames.find((allowed) => acc.name === allowed)
+          )
+          .filter((acc) => acc.apps.length < MAX_APPS);
+        const sortedAllowedAccounts = allowedAccounts.sort(
+          (a, b) => b.quotaRemaining() - a.quotaRemaining()
+        );
+        if (!sortedAllowedAccounts.length) {
+          resolve({ error: "no available account" });
+          return;
+        }
+        account = sortedAllowedAccounts[0].name;
+      }
+
+      if (!account) {
+        resolve({ error: "could not obtain deploy account" });
         return;
       }
 
-      const createAppResult = await this.createApp(preferredAccount, {
+      let config = LOCAL_CONFIG;
+
+      if (setConfigStrategy !== "local") {
+        const getConfigResult = await getConfig();
+
+        const remoteConfig = getConfigResult.content;
+
+        if (remoteConfig) {
+          config = remoteConfig;
+        } else {
+          if (setConfigStrategy === "remote") {
+            resolve({ error: "could not obtain remote config" });
+            return;
+          }
+        }
+      }
+
+      const existingApp = this.allApps().find((app) => app.name === name);
+
+      if (existingApp) {
+        const existingAccountName = existingApp.parentAccount.name;
+
+        if (existingAccountName !== account) {
+          if (migrationStrategy === "disabled") {
+            resolve({ error: "app exists on different account" });
+            return;
+          }
+
+          if (migrationStrategy === "external") {
+            const deleteAppResult: any = await this.deleteApp(name);
+            console.log("delete", name, "result", deleteAppResult.id);
+          } else {
+            resolve({ error: "internal migration not implemented" });
+            return;
+          }
+        }
+      }
+
+      const createAppResult = await this.createApp(account, {
         name,
       });
 
+      console.log(createAppResult);
+
       const initResult = await this.init();
 
-      const getConfigResult = await getConfig();
+      const app = this.getAppByName(name);
 
-      const config = getConfigResult.content;
-
-      if (!config) {
-        resolve({ error: "could not get config for app" });
+      if (!app) {
+        resolve({ error: "could not create app" });
         return;
       }
 
@@ -553,7 +647,7 @@ class HerokuAppManager {
   }
 }
 
-function interpreter(argv) {
+async function interpreter(argv) {
   const command = argv._[0];
 
   if (command === "config") {
@@ -569,20 +663,34 @@ function interpreter(argv) {
         console.error("could not obtain config", result);
       }
     });
-  }
-}
 
-async function test() {
+    return;
+  }
+
   const appMan = new HerokuAppManager();
 
-  await appMan.init();
+  const initResult = await appMan.init();
 
-  const deployResult = await appMan.deployApp("appmandummyapp");
+  if (command === "deploy") {
+    const name = argv.name;
 
-  console.log(deployResult);
+    if (!name) {
+      console.error("no app specified for deploy");
+      return;
+    }
+
+    const strategy: DeployStrategy = {
+      migrationStrategy: argv.migrate,
+      selectionStrategy: argv.select,
+      setConfigStrategy: argv.setconfig,
+      deployTo: argv.deployto || "",
+    };
+
+    const deployResult = await appMan.deployApp(name, strategy);
+
+    console.log(deployResult);
+  }
 }
-
-//test();
 
 if (require.main === module) {
   interpreter(argv);

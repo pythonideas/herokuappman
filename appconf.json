@@ -6,7 +6,7 @@
         "BROWSERCAPTURES",
         "BROWSERCAPTURESALT"
       ],
-      "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/config.tar.gz?raw=true"
+      "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/herokuappman.tar.gz?raw=true"
     }
   },
   "config": [

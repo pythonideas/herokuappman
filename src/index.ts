@@ -1,7 +1,10 @@
 import fetch from "node-fetch";
 import fs from "fs";
 
-import { getGitContentJsonDec } from "@browsercapturesalt/config/server/utils";
+import {
+  getGitContentJsonDec,
+  upsertGitContent,
+} from "@browsercapturesalt/config/server/utils";
 
 export { fetch };
 
@@ -662,6 +665,14 @@ class HerokuAppManager {
   }
 }
 
+export function uploadTargz() {
+  const targz = fs.readFileSync("repo.tar.gz");
+
+  upsertGitContent("apptargz/herokuappman.tar.gz", targz).then((result) => {
+    console.log("upload tar.gz status", result.status);
+  });
+}
+
 export async function interpreter(argv) {
   const command = argv._[0];
 
@@ -714,6 +725,12 @@ export async function interpreter(argv) {
 
   if (command === "serve") {
     startServer();
+
+    return;
+  }
+
+  if (command === "uploadtargz") {
+    uploadTargz();
 
     return;
   }

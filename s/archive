@@ -1,0 +1,5 @@
+. s/env
+rm repo.tar.gz
+git archive --format=tar.gz --output=repo.tar.gz HEAD
+node dist/index.js uploadtargz
+rm repo.tar.gz

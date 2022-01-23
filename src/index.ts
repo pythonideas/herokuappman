@@ -171,7 +171,14 @@ export class HerokuApp {
     this.parentAccount = parentAccount;
   }
   build(url) {
-    console.log("starting build", this.name, this.parentAccount.name, url);
+    console.log(
+      "starting build",
+      this.name,
+      "at",
+      this.parentAccount.name,
+      "targz",
+      url
+    );
     return new Promise((resolve) => {
       post(
         `apps/${this.name}/builds`,
@@ -296,7 +303,7 @@ export class HerokuAccount {
     this.token = process.env[this.envTokenFullName];
   }
   createApp(cap: CreateAppParams) {
-    console.log("creating app", cap);
+    console.log("creating app", cap, "at", this.name);
     return new Promise((resolve) => {
       post("apps", cap, this.token).then((result: any) => {
         if (result.id === "invalid_params") {
@@ -306,14 +313,14 @@ export class HerokuAccount {
             message: result.message,
           });
         } else {
-          console.log("created app", cap, "id", result.id);
+          console.log("created app", cap, "at", this.name, "id", result.id);
           resolve(result);
         }
       });
     });
   }
   deleteApp(name: string) {
-    console.log("deleting app", name);
+    console.log("deleting app", name, "at", this.name);
     return new Promise((resolve) => {
       del(`apps/${name}`, undefined, this.token).then((result: any) => {
         if (result.id === "not_found") {
@@ -323,7 +330,7 @@ export class HerokuAccount {
             message: result.message,
           });
         } else {
-          console.log("deleted", name, "id", result.id);
+          console.log("deleted", name, "at", this.name, "id", result.id);
           resolve(result);
         }
       });
@@ -418,7 +425,6 @@ class HerokuAppManager {
     return acc;
   }
   createApp(accountName: string, cap: CreateAppParams) {
-    console.log("creating app", accountName, cap);
     const acc = this.getAccountByName(accountName);
     return new Promise((resolve) => {
       if (acc) {

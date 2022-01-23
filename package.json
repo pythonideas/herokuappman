@@ -11,6 +11,7 @@
   "scripts": {
     "r": "yarn build && node dist/index.js",
     "serve": "nodemon --exec bash startserver.sh",
+    "bserve": "yarn build && yarn serve",
     "build": "rollup -c",
     "watch": "rollup -c --watch",
     "pretty": "prettier -w rollup.config.js src/index.ts package.json tsconfig.json src/server.ts views/index.html views/utils.js"
@@ -24,7 +25,7 @@
     "vue": "^3.2.28"
   },
   "name": "@browsercapturesalt/herokuappman",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Heroku application manager.",
   "keywords": [
     "heroku",

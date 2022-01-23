@@ -9,6 +9,7 @@ import {
 export { fetch };
 
 import { startServer } from "./server";
+import { stringifyStyle } from "@vue/shared";
 
 const argv = require("minimist")(process.argv.slice(2));
 
@@ -168,6 +169,15 @@ export class HerokuApp {
   region: string = "";
   quotaUsed: number = 0;
   parentAccount: HerokuAccount = new HerokuAccount("");
+  serialize() {
+    return {
+      id: this.id,
+      name: this.name,
+      stack: this.stack,
+      region: this.region,
+      quotaUsed: this.quotaUsed,
+    };
+  }
   constructor(parentAccount: HerokuAccount, blob: any) {
     this.id = blob.id;
     this.name = blob.name;
@@ -302,6 +312,15 @@ export class HerokuAccount {
   quotaTotal: number = 0;
   quotaUsed: number = 0;
   apps: HerokuApp[] = [];
+  serialize() {
+    return {
+      name: this.name,
+      id: this.id,
+      quotaTotal: this.quotaTotal,
+      quotaUsed: this.quotaUsed,
+      apps: this.apps.map((app) => app.serialize()),
+    };
+  }
   constructor(name: string) {
     this.name = name;
     this.envTokenFullName = "HEROKU_TOKEN_" + this.name;
@@ -424,6 +443,11 @@ function getAllEnvTokens() {
 
 class HerokuAppManager {
   accounts: HerokuAccount[] = [];
+  serialize() {
+    return {
+      accounts: this.accounts.map((account) => account.serialize()),
+    };
+  }
   constructor() {}
   getAccountByName(name: string) {
     const acc = this.accounts.find((acc) => acc.name === name);
@@ -542,7 +566,8 @@ class HerokuAppManager {
       resolve(initResult);
     });
   }
-  deployApp(name, strategyOpt: DeployStrategy) {
+  deployApp(nameOpt?: string, strategyOpt?: DeployStrategy) {
+    const name = nameOpt || APP_CONF.defaultApp || "appmandummyapp";
     const strategy = strategyOpt || {};
     const migrationStrategy =
       strategy.migrationStrategy || DEFAULT_MIGRATION_STRATEGY;
@@ -551,7 +576,7 @@ class HerokuAppManager {
     const setConfigStrategy =
       strategy.setConfigStrategy || DEFAULT_SET_CONFIG_STRATEGY;
     return new Promise(async (resolve) => {
-      const appConf = getAppConf("appmandummyapp");
+      const appConf = getAppConf(name);
 
       if (!appConf) {
         resolve({ error: "no conf for app" });
@@ -665,6 +690,8 @@ class HerokuAppManager {
   }
 }
 
+export const appMan = new HerokuAppManager();
+
 export function uploadTargz() {
   const targz = fs.readFileSync("repo.tar.gz");
 
@@ -693,7 +720,11 @@ export async function interpreter(argv) {
     return;
   }
 
-  const appMan = new HerokuAppManager();
+  if (command === "serve") {
+    startServer();
+
+    return;
+  }
 
   const initResult = await appMan.init();
 
@@ -719,12 +750,6 @@ export async function interpreter(argv) {
 
   if (command === "delete") {
     const deleteResult = await appMan.deleteApp(argv.name);
-
-    return;
-  }
-
-  if (command === "serve") {
-    startServer();
 
     return;
   }

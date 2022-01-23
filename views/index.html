@@ -1,4 +1,16 @@
-<style></style>
+<style>
+  .accounts {
+    border-collapse: collapse;
+    font-family: monospace;
+    font-size: 18px;
+  }
+  .accounts td {
+    border: solid 1px #777;
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+</style>
 
 <script src="/vue.js"></script>
 <script src="/utils.js"></script>
@@ -8,6 +20,23 @@
   <hr />
   <button @click="setadminpass">Set Admin Pass</button>
   <hr />
+  <table class="accounts">
+    <tr v-for="account in appMan.accounts">
+      <td style="font-weight: bold; color: #700; text-align: center">
+        {{account.name}}
+      </td>
+      <td style="font-weight: bold; color: #070; text-align: center">
+        {{Math.round((account.quotaTotal - account.quotaUsed)/3600)}}
+      </td>
+      <td>
+        <table>
+          <tr v-for="app in account.apps">
+            <td style="font-weight: bold; color: #007">{{ app.name }}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <script>
@@ -22,10 +51,19 @@
     },
     data() {
       return {
-        welcome: "Welcome to Express Min !",
+        welcome: "Welcome to Heroku App Manager !",
+        appMan: { accounts: [] },
       };
     },
-    mounted() {},
+    mounted() {
+      post("appman", {}).then((result) => {
+        if (result.error) {
+          window.alert(result.error);
+        } else {
+          this.appMan = result;
+        }
+      });
+    },
   }).mount("#app");
 
   hotReload();

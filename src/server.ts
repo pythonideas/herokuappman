@@ -1,5 +1,6 @@
 import express from "express";
 import utils from "@browsercapturesalt/config/server/utils";
+import { appMan } from "./index";
 
 const PORT = utils.envIntElse("PORT", 3000);
 const API_BASE_URL = "/api";
@@ -31,6 +32,14 @@ api.get("/init", (req, res) => {
   utils.sendJson(res, { SERVER_STARTED_AT, INDEX_TITLE });
 });
 
+api.post("/appman", (req, res) => {
+  if (req.isAdmin) {
+    utils.sendJson(res, appMan.serialize());
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
 app.get("/", (req, res) => {
   utils.sendView(res, "index.html");
 });
@@ -44,8 +53,8 @@ app.get("/utils.js", (req, res) => {
 });
 
 export function startServer() {
-  utils.init().then((utilsInitOk) => {
-    console.log({ utilsInitOk });
+  Promise.all([utils.init(), appMan.init()]).then((initResults) => {
+    console.log({ initResults });
 
     app.listen(PORT, () => {
       console.log(`${APP_NAME} listening at ${PORT}`);

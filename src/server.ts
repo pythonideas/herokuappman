@@ -26,7 +26,7 @@ api.use((req, res, next) => {
 app.use(API_BASE_URL, api);
 
 const SERVER_STARTED_AT = Date.now();
-const INDEX_TITLE = "Express Min";
+const INDEX_TITLE = "Heroku App Manager";
 
 api.get("/init", (req, res) => {
   utils.sendJson(res, { SERVER_STARTED_AT, INDEX_TITLE });

@@ -306,21 +306,24 @@ export class HerokuAccount {
             message: result.message,
           });
         } else {
-          console.log("created app", cap);
+          console.log("created app", cap, "id", result.id);
           resolve(result);
         }
       });
     });
   }
   deleteApp(name: string) {
+    console.log("deleting app", name);
     return new Promise((resolve) => {
       del(`apps/${name}`, undefined, this.token).then((result: any) => {
         if (result.id === "not_found") {
+          console.error(result.message);
           resolve({
             error: "not found",
             message: result.message,
           });
         } else {
+          console.log("deleted", name, "id", result.id);
           resolve(result);
         }
       });
@@ -627,8 +630,6 @@ class HerokuAppManager {
         name,
       });
 
-      console.log(createAppResult);
-
       const initResult = await this.init();
 
       const app = this.getAppByName(name);
@@ -640,7 +641,13 @@ class HerokuAppManager {
 
       const setConfigResult = await this.setConfig(name, config);
 
-      const awaitBuildResult = await app.awaitBuild(targzUrl);
+      const awaitBuildResult: any = await app.awaitBuild(targzUrl);
+
+      if (awaitBuildResult.done) {
+        console.log("deployed", name, "status", awaitBuildResult.done.status);
+      } else {
+        console.error("deploy", name, "failed", awaitBuildResult.status);
+      }
 
       resolve(awaitBuildResult);
     });
@@ -688,7 +695,13 @@ async function interpreter(argv) {
 
     const deployResult = await appMan.deployApp(name, strategy);
 
-    console.log(deployResult);
+    return;
+  }
+
+  if (command === "delete") {
+    const deleteResult = await appMan.deleteApp(argv.name);
+
+    return;
   }
 }
 

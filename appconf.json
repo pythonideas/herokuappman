@@ -1,10 +1,9 @@
 {
   "apps": {
     "appmandummyapp": {
-      "preferredAccount": "BROWSERCAPTURES",
+      "preferredAccount": "AESTHETICBOOKSHELF",
       "allowedAccounts": [
-        "BROWSERCAPTURES",
-        "BROWSERCAPTURESALT"
+        "AESTHETICBOOKSHELF"
       ],
       "targzUrl": "https://github.com/browsercapturesalt/blobs/blob/main/apptargz/herokuappman.tar.gz?raw=true"
     }

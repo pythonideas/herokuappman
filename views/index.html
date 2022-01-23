@@ -2,7 +2,7 @@
   .accounts {
     border-collapse: collapse;
     font-family: monospace;
-    font-size: 18px;
+    font-size: 20px;
   }
   .accounts td {
     border: solid 1px #777;
@@ -23,15 +23,49 @@
   <table class="accounts">
     <tr v-for="account in appMan.accounts">
       <td style="font-weight: bold; color: #700; text-align: center">
-        {{account.name}}
+        {{ account.name }}
       </td>
       <td style="font-weight: bold; color: #070; text-align: center">
-        {{Math.round((account.quotaTotal - account.quotaUsed)/3600)}}
+        {{ Math.round((account.quotaTotal - account.quotaUsed)/3600) }}
       </td>
       <td>
         <table>
           <tr v-for="app in account.apps">
-            <td style="font-weight: bold; color: #007">{{ app.name }}</td>
+            <td
+              style="
+                font-weight: bold;
+                color: #007;
+                min-width: 200px;
+                font-size: 18px;
+              "
+            >
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                :href="`https://${app.name}.herokuapp.com`"
+                >{{ app.name }}
+              </a>
+            </td>
+            <td
+              style="
+                font-weight: bold;
+                color: #700;
+                min-width: 30px;
+                text-align: center;
+              "
+            >
+              {{ Math.round(app.quotaUsed/3600) }}
+            </td>
+            <td
+              style="
+                font-weight: bold;
+                color: #770;
+                min-width: 30px;
+                text-align: center;
+              "
+            >
+              {{ app.region }}
+            </td>
           </tr>
         </table>
       </td>

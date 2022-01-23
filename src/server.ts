@@ -34,7 +34,9 @@ api.get("/init", (req, res) => {
 
 api.post("/appman", (req, res) => {
   if (req.isAdmin) {
-    utils.sendJson(res, appMan.serialize());
+    appMan.init().then((result) => {
+      utils.sendJson(res, appMan.serialize());
+    });
   } else {
     utils.sendJson(res, { error: "Not Authorized" });
   }

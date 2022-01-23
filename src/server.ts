@@ -46,6 +46,10 @@ app.get("/", (req, res) => {
   utils.sendView(res, "index.html");
 });
 
+app.get("/favicon.ico", (req, res) => {
+  utils.sendView(res, "favicon.ico");
+});
+
 app.get("/vue.js", (req, res) => {
   utils.sendModule(res, "vue/dist/vue.global.prod.js");
 });

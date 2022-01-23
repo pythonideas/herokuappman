@@ -660,7 +660,7 @@ class HerokuAppManager {
   }
 }
 
-async function interpreter(argv) {
+export async function interpreter(argv) {
   const command = argv._[0];
 
   if (command === "config") {
@@ -709,6 +709,8 @@ async function interpreter(argv) {
 
     return;
   }
+
+  console.error("unknwon command", command);
 }
 
 if (require.main === module) {

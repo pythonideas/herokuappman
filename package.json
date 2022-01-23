@@ -18,5 +18,27 @@
   "dependencies": {
     "minimist": "^1.2.5",
     "node-fetch": "^3.2.0"
+  },
+  "name": "@browsercapturesalt/herokuappman",
+  "version": "1.0.1",
+  "description": "Heroku application manager.",
+  "keywords": [
+    "heroku",
+    "application",
+    "manager"
+  ],
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/pythonideas/herokuappman",
+    "type": "git"
+  },
+  "homepage": "https://github.com/pythonideas/herokuappman#readme",
+  "contributors": [
+    "pythonideas <rustbotchessapp@gmail.com>"
+  ],
+  "private": false,
+  "main": "dist/index.js",
+  "bin": {
+    "appman": "./bin/appman"
   }
 }

@@ -1,0 +1,7 @@
+node s/bump.js
+
+s/p "$*"
+
+s/auth
+
+npm publish --access=public

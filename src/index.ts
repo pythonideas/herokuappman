@@ -545,7 +545,8 @@ class HerokuAppManager {
       }
     });
   }
-  getBuilds(name: string) {
+  getBuilds(nameOpt?: string) {
+    const name = nameOpt || DEFAULT_APP_NAME;
     const app = this.getAppByName(name);
     return new Promise((resolve) => {
       if (app) {

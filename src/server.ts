@@ -52,6 +52,16 @@ api.post("/getlogs", (req, res) => {
   }
 });
 
+api.post("/getbuilds", (req, res) => {
+  if (req.isAdmin) {
+    appMan.getBuilds(req.body.name).then((result) => {
+      utils.sendJson(res, result);
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
 app.get("/", (req, res) => {
   utils.sendView(res, "index.html");
 });

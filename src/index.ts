@@ -9,7 +9,6 @@ import {
 export { fetch };
 
 import { startServer } from "./server";
-import { stringifyStyle } from "@vue/shared";
 
 const argv = require("minimist")(process.argv.slice(2));
 
@@ -19,6 +18,8 @@ const DEFAULT_ACCEPT = "application/vnd.heroku+json; version=3";
 const MAX_APPS = 5;
 
 const APP_CONF = JSON.parse(fs.readFileSync("appconf.json").toString());
+
+const DEFAULT_APP_NAME = APP_CONF.defaultApp || "appmandummyapp";
 
 const LOCAL_CONFIG = {};
 
@@ -33,7 +34,15 @@ function getAppConf(name) {
 let VERBOSE = false;
 
 function log(...args) {
-  if (VERBOSE) console.log(...args);
+  if (VERBOSE) syslog(...args);
+}
+
+let syslog = (...args) => {
+  console.log(...args);
+};
+
+export function setSyslog(syslogFunc: any) {
+  syslog = syslogFunc;
 }
 
 export const SECOND = 1000;
@@ -98,12 +107,12 @@ export function api(endpoint, method, payload, token, accept?) {
             resolve(json);
           },
           (err) => {
-            console.error(err);
+            syslog("ERROR", err);
             reject(err);
           }
         ),
       (err) => {
-        console.error(err);
+        syslog("ERROR", err);
         reject(err);
       }
     );
@@ -133,7 +142,7 @@ function awaitCompletion(resolve, func, triesLeft, stepOpt?) {
   if (triesLeft <= 0) {
     resolve({ error: "timed out" });
   } else {
-    console.log("awaiting step", step, "tries left", triesLeft);
+    syslog("awaiting step", step, "tries left", triesLeft);
     func().then((result: any) => {
       if (result.done) {
         resolve(result);
@@ -162,6 +171,11 @@ export type DeployStrategy = {
   deployTo?: string;
 };
 
+export type LogParams = {
+  lines?: number;
+  tail?: boolean;
+};
+
 export class HerokuApp {
   id: string = "";
   name: string = "";
@@ -185,8 +199,21 @@ export class HerokuApp {
     this.region = blob.region.name;
     this.parentAccount = parentAccount;
   }
+  getLogs(lpOpt?: LogParams) {
+    const lp: LogParams = lpOpt || {
+      lines: 500,
+      tail: true,
+    };
+    return new Promise((resolve) => {
+      post(`apps/${this.name}/log-sessions`, lp, this.parentAccount.token).then(
+        (result: any) => {
+          resolve(result);
+        }
+      );
+    });
+  }
   build(url) {
-    console.log(
+    syslog(
       "starting build",
       this.name,
       "at",
@@ -255,7 +282,7 @@ export class HerokuApp {
   }
   setConfig(config) {
     const numKeys = Object.keys(config).length;
-    console.log("setting config", this.name, numKeys, "keys");
+    syslog("setting config", this.name, numKeys, "keys");
     return new Promise((resolve) => {
       patch(
         `apps/${this.name}/config-vars`,
@@ -264,7 +291,7 @@ export class HerokuApp {
       ).then((result: any) => {
         if (typeof result === "object") {
           const setNumKeys = Object.keys(result).length;
-          console.log(
+          syslog(
             "set config result",
             this.name,
             setNumKeys,
@@ -272,7 +299,7 @@ export class HerokuApp {
             setNumKeys >= numKeys ? "ok" : "failed"
           );
         } else {
-          console.error("set config result is not object", this.name, result);
+          syslog("ERROR", "set config result is not object", this.name, result);
         }
         resolve(result);
       });
@@ -327,34 +354,34 @@ export class HerokuAccount {
     this.token = process.env[this.envTokenFullName];
   }
   createApp(cap: CreateAppParams) {
-    console.log("creating app", cap, "at", this.name);
+    syslog("creating app", cap, "at", this.name);
     return new Promise((resolve) => {
       post("apps", cap, this.token).then((result: any) => {
         if (result.id === "invalid_params") {
-          console.warn("could not create app", cap, result.message);
+          syslog("could not create app", cap, result.message);
           resolve({
             error: "invalid params",
             message: result.message,
           });
         } else {
-          console.log("created app", cap, "at", this.name, "id", result.id);
+          syslog("created app", cap, "at", this.name, "id", result.id);
           resolve(result);
         }
       });
     });
   }
   deleteApp(name: string) {
-    console.log("deleting app", name, "at", this.name);
+    syslog("deleting app", name, "at", this.name);
     return new Promise((resolve) => {
       del(`apps/${name}`, undefined, this.token).then((result: any) => {
         if (result.id === "not_found") {
-          console.error(result.message);
+          syslog("ERROR", result.message);
           resolve({
             error: "not found",
             message: result.message,
           });
         } else {
-          console.log("deleted", name, "at", this.name, "id", result.id);
+          syslog("deleted", name, "at", this.name, "id", result.id);
           resolve(result);
         }
       });
@@ -415,7 +442,7 @@ export class HerokuAccount {
         try {
           this.getAppById(qApp.app_uuid).quotaUsed = qApp.quota_used;
         } catch (err) {
-          /*console.warn(
+          /*syslog(
             `quota app not among account apps`,
             qApp,
             this.apps.map((app) => app.id)
@@ -503,6 +530,21 @@ class HerokuAppManager {
       }
     });
   }
+  getLogs(nameOpt?: string, lpOpt?: LogParams) {
+    const name = nameOpt || DEFAULT_APP_NAME;
+    const app = this.getAppByName(name);
+    return new Promise((resolve) => {
+      if (app) {
+        app.getLogs(lpOpt).then((result: any) => {
+          resolve(result);
+        });
+      } else {
+        resolve({
+          error: "no such app",
+        });
+      }
+    });
+  }
   getBuilds(name: string) {
     const app = this.getAppByName(name);
     return new Promise((resolve) => {
@@ -545,7 +587,7 @@ class HerokuAppManager {
       .join("\n")}\n>`;
   }
   init() {
-    console.log("initializing app manager");
+    syslog("initializing app manager");
     return new Promise(async (resolve) => {
       this.accounts = getAllEnvTokens().map(
         (token) => new HerokuAccount(token.name)
@@ -555,7 +597,7 @@ class HerokuAppManager {
         this.accounts.map((acc) => acc.init())
       );
 
-      console.log(
+      syslog(
         "initialized",
         initResult.length,
         "account(s)",
@@ -567,7 +609,7 @@ class HerokuAppManager {
     });
   }
   deployApp(nameOpt?: string, strategyOpt?: DeployStrategy) {
-    const name = nameOpt || APP_CONF.defaultApp || "appmandummyapp";
+    const name = nameOpt || DEFAULT_APP_NAME;
     const strategy = strategyOpt || {};
     const migrationStrategy =
       strategy.migrationStrategy || DEFAULT_MIGRATION_STRATEGY;
@@ -575,7 +617,7 @@ class HerokuAppManager {
       strategy.selectionStrategy || DEFAULT_SELECTION_STRATEGY;
     const setConfigStrategy =
       strategy.setConfigStrategy || DEFAULT_SET_CONFIG_STRATEGY;
-    console.log(
+    syslog(
       "deploying app",
       name,
       migrationStrategy,
@@ -583,7 +625,7 @@ class HerokuAppManager {
       setConfigStrategy
     );
     return new Promise(async (resolve) => {
-      console.log("getting app conf", name);
+      syslog("getting app conf", name);
 
       const appConf = getAppConf(name);
 
@@ -592,7 +634,7 @@ class HerokuAppManager {
         return;
       }
 
-      console.log("getting targz url", name);
+      syslog("getting targz url", name);
 
       const targzUrl = appConf.targzUrl;
 
@@ -601,7 +643,7 @@ class HerokuAppManager {
         return;
       }
 
-      console.log("getting deploy account", name);
+      syslog("getting deploy account", name);
 
       let account = strategy.deployTo;
 
@@ -637,7 +679,7 @@ class HerokuAppManager {
         return;
       }
 
-      console.log("getting config", name);
+      syslog("getting config", name);
 
       let config = LOCAL_CONFIG;
 
@@ -656,12 +698,12 @@ class HerokuAppManager {
         }
       }
 
-      console.log("migrating", name);
+      syslog("migrating", name);
 
       const existingApp = this.allApps().find((app) => app.name === name);
 
       if (existingApp) {
-        console.log("already exists", name);
+        syslog("already exists", name);
 
         const existingAccountName = existingApp.parentAccount.name;
 
@@ -673,7 +715,7 @@ class HerokuAppManager {
 
           if (migrationStrategy === "external") {
             const deleteAppResult: any = await this.deleteApp(name);
-            console.log("delete", name, "result", deleteAppResult.id);
+            syslog("delete", name, "result", deleteAppResult.id);
           } else {
             resolve({ error: "internal migration not implemented" });
             return;
@@ -681,7 +723,7 @@ class HerokuAppManager {
         }
       }
 
-      console.log("creating", name);
+      syslog("creating", name);
 
       const createAppResult = await this.createApp(account, {
         name,
@@ -696,18 +738,18 @@ class HerokuAppManager {
         return;
       }
 
-      console.log("setting config", name);
+      syslog("setting config", name);
 
       const setConfigResult = await this.setConfig(name, config);
 
-      console.log("building", name);
+      syslog("building", name);
 
       const awaitBuildResult: any = await app.awaitBuild(targzUrl);
 
       if (awaitBuildResult.done) {
-        console.log("deployed", name, "status", awaitBuildResult.done.status);
+        syslog("deployed", name, "status", awaitBuildResult.done.status);
       } else {
-        console.error("deploy", name, "failed", awaitBuildResult.status);
+        syslog("ERROR", "deploy", name, "failed", awaitBuildResult.status);
       }
 
       resolve(awaitBuildResult);
@@ -720,67 +762,81 @@ export const appMan = new HerokuAppManager();
 export function uploadTargz() {
   const targz = fs.readFileSync("repo.tar.gz");
 
-  upsertGitContent("apptargz/herokuappman.tar.gz", targz).then((result) => {
-    console.log("upload tar.gz status", result.status);
+  return new Promise((resolve) => {
+    upsertGitContent("apptargz/herokuappman.tar.gz", targz).then((result) => {
+      syslog("upload tar.gz status", result.status);
+
+      resolve(result);
+    });
   });
 }
 
-export async function interpreter(argv) {
+export function interpreter(argv) {
   const command = argv._[0];
 
-  if (command === "config") {
-    getConfig().then((result) => {
-      const config = result.content;
-      if (config) {
-        const keys = Object.keys(config);
-        APP_CONF["config"] = keys;
-        fs.writeFileSync("appconf.json", JSON.stringify(APP_CONF, null, 2));
-        console.log(keys);
-        console.log("written", keys.length, "keys");
-      } else {
-        console.error("could not obtain config", result);
-      }
-    });
+  return new Promise(async (resolve) => {
+    if (command === "config") {
+      getConfig().then((result) => {
+        const config = result.content;
+        if (config) {
+          const keys = Object.keys(config);
+          APP_CONF["config"] = keys;
+          fs.writeFileSync("appconf.json", JSON.stringify(APP_CONF, null, 2));
+          syslog(keys);
+          syslog("written", keys.length, "keys");
+          resolve({ done: config });
+        } else {
+          syslog("ERROR", "could not obtain config", result);
+          resolve({ error: result });
+        }
+      });
 
-    return;
-  }
+      return;
+    }
 
-  if (command === "serve") {
-    startServer();
+    if (command === "serve") {
+      startServer().then((result) => resolve(result));
 
-    return;
-  }
+      return;
+    }
 
-  const initResult = await appMan.init();
+    const initResult = await appMan.init();
 
-  if (command === "deploy") {
-    const name = argv.name;
+    if (command === "deploy") {
+      const name = argv.name;
 
-    const strategy: DeployStrategy = {
-      migrationStrategy: argv.migrate,
-      selectionStrategy: argv.select,
-      setConfigStrategy: argv.setconfig,
-      deployTo: argv.deployto || "",
-    };
+      const strategy: DeployStrategy = {
+        migrationStrategy: argv.migrate,
+        selectionStrategy: argv.select,
+        setConfigStrategy: argv.setconfig,
+        deployTo: argv.deployto || "",
+      };
 
-    const deployResult = await appMan.deployApp(name, strategy);
+      const deployResult = await appMan.deployApp(name, strategy);
 
-    return;
-  }
+      resolve(deployResult);
 
-  if (command === "delete") {
-    const deleteResult = await appMan.deleteApp(argv.name);
+      return;
+    }
 
-    return;
-  }
+    if (command === "delete") {
+      const deleteResult = await appMan.deleteApp(argv.name);
 
-  if (command === "uploadtargz") {
-    uploadTargz();
+      resolve(deleteResult);
 
-    return;
-  }
+      return;
+    }
 
-  console.error("unknwon command", command);
+    if (command === "uploadtargz") {
+      uploadTargz().then((result) => resolve(result));
+
+      return;
+    }
+
+    syslog("ERROR", "unknwon command", command);
+
+    resolve({ error: "unknown command", command });
+  });
 }
 
 if (require.main === module) {

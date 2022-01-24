@@ -42,6 +42,16 @@ api.post("/appman", (req, res) => {
   }
 });
 
+api.post("/getlogs", (req, res) => {
+  if (req.isAdmin) {
+    appMan.getLogs(req.body.app.name).then((result) => {
+      utils.sendJson(res, result);
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
 app.get("/", (req, res) => {
   utils.sendView(res, "index.html");
 });
@@ -59,27 +69,15 @@ app.get("/utils.js", (req, res) => {
 });
 
 export function startServer() {
-  Promise.all([utils.init(), appMan.init()]).then((initResults) => {
-    console.log({ initResults });
+  return new Promise((resolve) => {
+    Promise.all([utils.init(), appMan.init()]).then((initResults) => {
+      console.log({ initResults });
 
-    app.listen(PORT, () => {
-      console.log(`${APP_NAME} listening at ${PORT}`);
+      app.listen(PORT, () => {
+        console.log(`${APP_NAME} listening at ${PORT}`);
+
+        resolve({ initResults, APP_NAME, PORT });
+      });
     });
-
-    /*utils.upsertGitContentJsonEnc("test", {"test": true}).then((result) => {
-    console.log("upsert result", result);
-
-    utils.getGitContentJsonDec("test").then((result) => {
-      console.log("get result", result, result.content);
-    });
-  });*/
-
-    /*const enc = utils.encrypt("Hello World!", "utf8")
-  const dec = utils.decrypt(enc)
-  console.log(enc, dec)*/
-
-    //utils.deleteRepo("blobs").then(result => console.log(result))
-
-    //utils.createRepo("blobs").then(result => console.log(result))
   });
 }

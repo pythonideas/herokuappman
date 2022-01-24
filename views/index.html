@@ -67,6 +67,11 @@
             >
               {{ app.region }}
             </td>
+            <td style="">
+              <button style="background-color: #afa" @click="getlogs(app)">
+                Logs
+              </button>
+            </td>
           </tr>
         </table>
       </td>
@@ -78,6 +83,15 @@
   Vue.createApp({
     computed: {},
     methods: {
+      getlogs(app) {
+        post("getlogs", { app }).then((result) => {
+          if (result.error) {
+            window.alert(result.error);
+          } else {
+            window.open(result.logplex_url, "_blank");
+          }
+        });
+      },
       setadminpass() {
         const pass = window.prompt("Admin Pass");
         localStorage.setItem("ADMIN_PASS", pass);

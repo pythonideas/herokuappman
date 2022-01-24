@@ -21,6 +21,17 @@
     padding-left: 10px;
     padding-right: 10px;
   }
+  .config {
+    border-collapse: collapse;
+    font-family: monospace;
+    font-size: 20px;
+  }
+  .config td {
+    border: solid 1px #777;
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 </style>
 
 <script src="/vue.js"></script>
@@ -81,7 +92,16 @@
                 {{ app.region }}
               </td>
               <td style="">
-                <button style="background-color: #afa" @click="getlogs(app)">
+                <button
+                  style="background-color: #ffa; margin-left: 10px"
+                  @click="getconfig(app)"
+                >
+                  Config
+                </button>
+                <button
+                  style="background-color: #afa; margin-left: 10px"
+                  @click="getlogs(app)"
+                >
                   Logs
                 </button>
                 <button
@@ -93,6 +113,48 @@
               </td>
             </tr>
           </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div v-if="params.config">
+    <span style="font-family: monospace">
+      Config of
+      <span style="color: #070; font-weight: bold; font-size: 20px"
+        >{{ params.appName }}</span
+      >
+    </span>
+    <hr />
+    <button style="background-color: #afa" @click="addkey">Add Key</button>
+    <button
+      style="background-color: #ffa; margin-left: 10px"
+      @click="uploadconfig"
+    >
+      Upload Config
+    </button>
+    <hr />
+    <table class="config">
+      <tr
+        v-for="key in Object.keys(params.config).sort((a,b)=>a.localeCompare(b))"
+      >
+        <td style="color: #007">{{ key }}</td>
+        <td>
+          <button style="background-color: #afa" @click="editkey(key)">
+            Edit
+          </button>
+        </td>
+        <td style="max-width: 600px; overflow: hidden">
+          {{params.config[key]}}
+        </td>
+        <td>
+          <button style="background-color: #afa" @click="editvalue(key)">
+            Edit
+          </button>
+        </td>
+        <td>
+          <button style="background-color: #faa" @click="delkey(key)">
+            Del
+          </button>
         </td>
       </tr>
     </table>
@@ -131,6 +193,51 @@
   Vue.createApp({
     computed: {},
     methods: {
+      uploadconfig() {
+        post("setconfig", {
+          name: this.params.appName,
+          config: this.params.config,
+        }).then((result) => {
+          if (result.error) {
+            window.alert(result.error);
+          } else {
+            document.location.reload();
+          }
+        });
+      },
+      addkey() {
+        const key = window.prompt("Key");
+        if (key) {
+          const value = window.prompt("Value");
+
+          if (value !== undefined && value !== null) {
+            const smartKey = key.toUpperCase().replace(/ /g, "_");
+            this.params.config[smartKey] = value;
+          }
+        }
+      },
+      editkey(key) {
+        const value = this.params.config[key];
+        const newKey = window.prompt("Key", key);
+        if (newKey) {
+          if (this.params.config[newKey] !== undefined) {
+            window.alert("Key already exists!");
+          } else {
+            delete this.params.config[key];
+            this.params.config[newKey] = value;
+          }
+        }
+      },
+      delkey(key) {
+        delete this.params.config[key];
+      },
+      editvalue(key) {
+        const value = this.params.config[key];
+        const newValue = window.prompt("Key", value);
+        if (newValue) {
+          this.params.config[key] = newValue;
+        }
+      },
       getlogs(app) {
         post("getlogs", { app }).then((result) => {
           if (result.error) {
@@ -142,6 +249,9 @@
       },
       getbuilds(app) {
         window.open(`?builds=${app.name}`, "_blank");
+      },
+      getconfig(app) {
+        window.open(`?config=${app.name}`, "_blank");
       },
       setadminpass() {
         const pass = window.prompt("Admin Pass");
@@ -170,6 +280,20 @@
             window.alert(result.error);
           } else {
             this.params.builds = result;
+          }
+        });
+      }
+      const config = params.get("config");
+      if (config) {
+        this.params.config = {};
+
+        this.params.appName = config;
+
+        post("getconfig", { name: config }).then((result) => {
+          if (result.error) {
+            window.alert(result.error);
+          } else {
+            this.params.config = result;
           }
         });
       }

@@ -280,7 +280,8 @@ export class HerokuApp {
       );
     });
   }
-  setConfig(config) {
+  setConfig(configOpt?: any) {
+    const config = configOpt || {};
     const numKeys = Object.keys(config).length;
     syslog("setting config", this.name, numKeys, "keys");
     return new Promise((resolve) => {
@@ -502,11 +503,12 @@ class HerokuAppManager {
     const app = this.allApps().find((app) => app.name === name);
     return app;
   }
-  setConfig(name: string, config: any) {
+  setConfig(nameOpt?: string, configOpt?: any) {
+    const name = nameOpt || DEFAULT_APP_NAME;
     const app = this.getAppByName(name);
     return new Promise((resolve) => {
       if (app) {
-        app.setConfig(config).then((result: any) => {
+        app.setConfig(configOpt).then((result: any) => {
           resolve(result);
         });
       } else {
@@ -516,7 +518,8 @@ class HerokuAppManager {
       }
     });
   }
-  getConfig(name: string) {
+  getConfig(nameOpt?: string) {
+    const name = nameOpt || DEFAULT_APP_NAME;
     const app = this.getAppByName(name);
     return new Promise((resolve) => {
       if (app) {

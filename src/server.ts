@@ -62,6 +62,26 @@ api.post("/getbuilds", (req, res) => {
   }
 });
 
+api.post("/getconfig", (req, res) => {
+  if (req.isAdmin) {
+    appMan.getConfig(req.body.name).then((result) => {
+      utils.sendJson(res, result);
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
+api.post("/setconfig", (req, res) => {
+  if (req.isAdmin) {
+    appMan.setConfig(req.body.name, req.body.config).then((result) => {
+      utils.sendJson(res, result);
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
 app.get("/", (req, res) => {
   utils.sendView(res, "index.html");
 });

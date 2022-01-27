@@ -863,6 +863,9 @@ class GitHubAccount {
         })
         .then((result) => {
           resolve(result);
+        })
+        .catch((err) => {
+          resolve({ error: err });
         });
     });
   }
@@ -877,6 +880,9 @@ class GitHubAccount {
         })
         .then((result) => {
           resolve(result);
+        })
+        .catch((err) => {
+          resolve({ error: err });
         });
     });
   }
@@ -898,6 +904,9 @@ class GitHubAccount {
 
             resolve([]);
           }
+        })
+        .catch((err) => {
+          resolve([]);
         });
     });
   }
@@ -906,20 +915,25 @@ class GitHubAccount {
     return new Promise((resolve) => {
       this.octokit = new Octokit({ auth: this.token });
 
-      this.octokit.rest.users.getAuthenticated().then((result) => {
-        if (result.status === 200) {
-          const acc = result.data;
-          this.gitUserName = acc.login;
-          this.id = acc.id;
-          this.avatarUrl = acc.avatar_url;
-          this.gitUrl = acc.html_url;
-          this.getRepos().then((result) => {
-            resolve(this.serialize());
-          });
-        } else {
-          resolve({ error: result.status });
-        }
-      });
+      this.octokit.rest.users
+        .getAuthenticated()
+        .then((result) => {
+          if (result.status === 200) {
+            const acc = result.data;
+            this.gitUserName = acc.login;
+            this.id = acc.id;
+            this.avatarUrl = acc.avatar_url;
+            this.gitUrl = acc.html_url;
+            this.getRepos().then((result) => {
+              resolve(this.serialize());
+            });
+          } else {
+            resolve({ error: result.status });
+          }
+        })
+        .catch((err) => {
+          resolve({ error: err });
+        });
     });
   }
 

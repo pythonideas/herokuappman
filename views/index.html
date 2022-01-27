@@ -255,8 +255,8 @@
             name,
             init,
           }).then((result) => {
-            if (result.error) {
-              window.alert(result.error);
+            if (result.createResult.error) {
+              window.alert(JSON.stringify(result.createResult));
             } else {
               this.gitMan = result.gitMan;
             }
@@ -271,8 +271,8 @@
             gitUserName,
             name: repo.name,
           }).then((result) => {
-            if (result.error) {
-              window.alert(result.error);
+            if (result.deleteResult.error) {
+              window.alert(JSON.stringify(result.deleteResult));
             } else {
               this.gitMan = result.gitMan;
             }

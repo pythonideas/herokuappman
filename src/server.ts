@@ -70,9 +70,12 @@ api.post("/createrepo", (req, res) => {
   if (req.isAdmin) {
     const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);
     if (acc) {
-      acc.createRepo(req.body).then((result) => {
+      acc.createRepo(req.body).then((createResult) => {
         gitMan.init().then((result) => {
-          utils.sendJson(res, { gitMan: gitMan.serialize() });
+          utils.sendJson(res, {
+            createResult,
+            gitMan: gitMan.serialize(),
+          });
         });
       });
     } else {
@@ -87,10 +90,13 @@ api.post("/deleterepo", (req, res) => {
   if (req.isAdmin) {
     const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);
     if (acc) {
-      acc.deleteRepo(req.body.name).then((result) => {
+      acc.deleteRepo(req.body.name).then((deleteResult) => {
         setTimeout(() => {
           gitMan.init().then((result) => {
-            utils.sendJson(res, { gitMan: gitMan.serialize() });
+            utils.sendJson(res, {
+              deleteResult,
+              gitMan: gitMan.serialize(),
+            });
           });
         }, 5000);
       });

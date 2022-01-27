@@ -1,6 +1,6 @@
 import express from "express";
 import utils from "@browsercapturesalt/config/server/utils";
-import { appMan } from "./index";
+import { appMan, gitMan } from "./index";
 
 const PORT = utils.envIntElse("PORT", 3000);
 const API_BASE_URL = "/api";
@@ -36,6 +36,29 @@ api.post("/appman", (req, res) => {
   if (req.isAdmin) {
     appMan.init().then((result) => {
       utils.sendJson(res, appMan.serialize());
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
+api.post("/gitman", (req, res) => {
+  if (req.isAdmin) {
+    gitMan.init().then((result) => {
+      utils.sendJson(res, gitMan.serialize());
+    });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
+api.post("/allman", (req, res) => {
+  if (req.isAdmin) {
+    Promise.all([appMan.init(), gitMan.init()]).then((result) => {
+      utils.sendJson(res, {
+        appMan: appMan.serialize(),
+        gitMan: gitMan.serialize(),
+      });
     });
   } else {
     utils.sendJson(res, { error: "Not Authorized" });

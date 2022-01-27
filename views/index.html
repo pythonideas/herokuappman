@@ -116,6 +116,14 @@
         </td>
       </tr>
     </table>
+    <hr />
+    <table class="accounts">
+      <tr v-for="account in gitMan.accounts">
+        <td style="font-weight: bold; color: #700; text-align: center">
+          {{ account.gitUserName }}
+        </td>
+      </tr>
+    </table>
   </div>
   <div v-if="params.config">
     <span style="font-family: monospace">
@@ -263,6 +271,7 @@
       return {
         welcome: "Welcome to Heroku App Manager !",
         appMan: { accounts: [] },
+        gitMan: { accounts: [] },
         params: {},
       };
     },
@@ -297,11 +306,12 @@
           }
         });
       }
-      post("appman", {}).then((result) => {
+      post("allman", {}).then((result) => {
         if (result.error) {
           window.alert(result.error);
         } else {
-          this.appMan = result;
+          this.appMan = result.appMan;
+          this.gitMan = result.gitMan;
         }
       });
     },

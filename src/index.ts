@@ -471,6 +471,18 @@ function getAllEnvTokens() {
   return envTokens;
 }
 
+function getAllGitHubFullTokens() {
+  const envTokenKeys = Object.keys(process.env).filter((key) =>
+    key.match(/_GITHUB_TOKEN_FULL$/)
+  );
+  const envTokens = envTokenKeys.map((key) => ({
+    key,
+    envTokenName: key.split("_")[0],
+    token: process.env[key],
+  }));
+  return envTokens;
+}
+
 class HerokuAppManager {
   accounts: HerokuAccount[] = [];
   serialize() {
@@ -593,7 +605,7 @@ class HerokuAppManager {
       .join("\n")}\n>`;
   }
   init() {
-    syslog("initializing app manager");
+    syslog("initial,bizing app manager");
     return new Promise(async (resolve) => {
       this.accounts = getAllEnvTokens().map(
         (token) => new HerokuAccount(token.name)
@@ -602,6 +614,8 @@ class HerokuAppManager {
       const initResult = await Promise.all(
         this.accounts.map((acc) => acc.init())
       );
+
+      this.accounts.sort((a, b) => a.name.localeCompare(b.name));
 
       syslog(
         "initialized",
@@ -809,7 +823,36 @@ class GitHubAccount {
   }
 }
 
+class GitHubAccountManager {
+  accounts: GitHubAccount[] = [];
+  constructor() {}
+  serialize() {
+    return {
+      accounts: this.accounts.map((acc) => acc.serialize()),
+    };
+  }
+  init() {
+    syslog("initializing git manager");
+    return new Promise(async (resolve) => {
+      this.accounts = getAllGitHubFullTokens().map(
+        (token) => new GitHubAccount(token.envTokenName)
+      );
+
+      const initResult = await Promise.all(
+        this.accounts.map((acc) => acc.init())
+      );
+
+      this.accounts.sort((a, b) => a.gitUserName.localeCompare(b.gitUserName));
+
+      syslog("initialized", initResult.length, "account(s)");
+
+      resolve(initResult);
+    });
+  }
+}
+
 export const appMan = new HerokuAppManager();
+export const gitMan = new GitHubAccountManager();
 
 export function uploadTargz() {
   const targz = fs.readFileSync("repo.tar.gz");
@@ -852,7 +895,8 @@ export function interpreter(argv) {
       return;
     }
 
-    const initResult = await appMan.init();
+    const initResultAppMan = await appMan.init();
+    const initResultGitMan = await gitMan.init();
 
     if (command === "deploy") {
       const name = argv.name;
@@ -894,9 +938,3 @@ export function interpreter(argv) {
 if (require.main === module) {
   interpreter(argv);
 }
-
-/*const g = new GitHubAccount("PYTHONIDEAS")
-
-g.init().then(result => {
-  console.log(result)
-})*/

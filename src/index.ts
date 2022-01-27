@@ -786,6 +786,10 @@ class GitHubRepo {
   repoUrl: string = "";
   stars: number = 0;
   forks: number = 0;
+  createdAt: string = "";
+  updatedAt: string = "";
+  pushedAt: string = "";
+  blob: any = {};
 
   constructor(blob: any) {
     this.name = blob.name;
@@ -795,6 +799,10 @@ class GitHubRepo {
     this.repoUrl = blob.html_url;
     this.stars = blob.stargazers_count;
     this.forks = blob.forks;
+    this.createdAt = blob.created_at;
+    this.updatedAt = blob.updated_at;
+    this.pushedAt = blob.pushed_at;
+    this.blob = blob;
   }
 
   serialize() {
@@ -806,6 +814,10 @@ class GitHubRepo {
       repoUrl: this.repoUrl,
       stars: this.stars,
       forks: this.forks,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
+      pushedAt: this.pushedAt,
+      //blob: this.blob,
     };
   }
 }
@@ -829,11 +841,14 @@ class GitHubAccount {
 
   getRepos() {
     return new Promise((resolve) => {
+      // https://octokit.github.io/rest.js/v18#repos-list-for-authenticated-user
       this.octokit.rest.repos
-        .listForUser({ username: this.gitUserName })
+        .listForAuthenticatedUser({ per_page: 100 })
         .then((result) => {
           if (result.data) {
             this.repos = result.data.map((repo) => new GitHubRepo(repo));
+
+            this.repos.sort((a, b) => a.name.localeCompare(b.name));
 
             resolve(this.repos.map((repo) => repo.serialize()));
           } else {

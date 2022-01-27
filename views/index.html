@@ -126,7 +126,8 @@
         </td>
         <td>
           <table>
-            <tr v-for="repo in account.repos">
+            <tr v-for="(repo, index) in account.repos">
+              <td>{{ index + 1 }}</td>
               <td>
                 <a
                   rel="noopener noreferrer"
@@ -140,8 +141,9 @@
                 {{ repo.stars ? `* ${repo.stars}` : "" }}
               </td>
               <td style="text-align: center; color: #707; font-weight: bold">
-                {{ repo.forks ? `> ${repo.forks}` : "" }}
+                {{ repo.forks ? `-> ${repo.forks}` : "" }}
               </td>
+              <td style="color: #770">> {{ repo.pushedAt }}</td>
             </tr>
           </table>
         </td>

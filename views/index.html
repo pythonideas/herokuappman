@@ -158,6 +158,17 @@
               </td>
               <td style="color: #770">> {{ repo.pushedAt }}</td>
               <td>
+                <select @change="forkat($event, account, repo)">
+                  <option value="">Fork At</option>
+                  <option
+                    v-for="account in gitMan.accounts"
+                    :value="account.gitUserName"
+                  >
+                    {{ account.gitUserName }}
+                  </option>
+                </select>
+              </td>
+              <td>
                 <button
                   @click="deleterepo(account.gitUserName, repo)"
                   style="background-color: #faa"
@@ -247,6 +258,25 @@
   Vue.createApp({
     computed: {},
     methods: {
+      forkat(ev, account, repo) {
+        const gitUserName = ev.target.value;
+        ev.target.value = "";
+
+        const owner = account.gitUserName;
+        const name = repo.name;
+
+        post("fork", {
+          gitUserName,
+          owner,
+          name,
+        }).then((result) => {
+          if (result.forkResult.error) {
+            window.alert(JSON.stringify(result.forkResult));
+          } else {
+            this.gitMan = result.gitMan;
+          }
+        });
+      },
       createrepo(gitUserName, init) {
         const name = window.prompt("Name");
         if (name) {

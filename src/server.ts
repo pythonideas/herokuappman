@@ -86,6 +86,28 @@ api.post("/createrepo", (req, res) => {
   }
 });
 
+api.post("/fork", (req, res) => {
+  if (req.isAdmin) {
+    const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);
+    if (acc) {
+      acc.forkRepo(req.body.owner, req.body.name).then((forkResult) => {
+        setTimeout(() => {
+          gitMan.init().then((result) => {
+            utils.sendJson(res, {
+              forkResult,
+              gitMan: gitMan.serialize(),
+            });
+          });
+        }, 5000);
+      });
+    } else {
+      utils.sendJson(res, { error: "No Such Account" });
+    }
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
 api.post("/deleterepo", (req, res) => {
   if (req.isAdmin) {
     const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);

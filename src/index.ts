@@ -887,6 +887,23 @@ class GitHubAccount {
     });
   }
 
+  forkRepo(gitUserName: string, name: string) {
+    return new Promise((resolve) => {
+      // https://octokit.github.io/rest.js/v18#repos-create-fork
+      this.octokit.rest.repos
+        .createFork({
+          owner: gitUserName,
+          repo: name,
+        })
+        .then((result) => {
+          resolve(result);
+        })
+        .catch((err) => {
+          resolve({ error: err });
+        });
+    });
+  }
+
   getRepos() {
     return new Promise((resolve) => {
       // https://octokit.github.io/rest.js/v18#repos-list-for-authenticated-user
@@ -1075,6 +1092,18 @@ export function interpreter(argv) {
 
       if (acc) {
         const result = acc.createRepo({ name: argv.name, init: !!argv.init });
+
+        resolve(result);
+      } else {
+        resolve({ error: "no such account", gitUserName: argv.user });
+      }
+    }
+
+    if (command == "fork") {
+      const acc = gitMan.getAccountByGitUserName(argv.user);
+
+      if (acc) {
+        const result = acc.forkRepo(argv.owner, argv.name);
 
         resolve(result);
       } else {

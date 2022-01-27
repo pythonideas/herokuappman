@@ -1,6 +1,7 @@
 import express from "express";
 import utils from "@browsercapturesalt/config/server/utils";
 import { appMan, gitMan } from "./index";
+import { resolveComponent } from "vue";
 
 const PORT = utils.envIntElse("PORT", 3000);
 const API_BASE_URL = "/api";
@@ -60,6 +61,42 @@ api.post("/allman", (req, res) => {
         gitMan: gitMan.serialize(),
       });
     });
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
+api.post("/createrepo", (req, res) => {
+  if (req.isAdmin) {
+    const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);
+    if (acc) {
+      acc.createRepo(req.body).then((result) => {
+        gitMan.init().then((result) => {
+          utils.sendJson(res, { gitMan: gitMan.serialize() });
+        });
+      });
+    } else {
+      utils.sendJson(res, { error: "No Such Account" });
+    }
+  } else {
+    utils.sendJson(res, { error: "Not Authorized" });
+  }
+});
+
+api.post("/deleterepo", (req, res) => {
+  if (req.isAdmin) {
+    const acc = gitMan.getAccountByGitUserName(req.body.gitUserName);
+    if (acc) {
+      acc.deleteRepo(req.body.name).then((result) => {
+        setTimeout(() => {
+          gitMan.init().then((result) => {
+            utils.sendJson(res, { gitMan: gitMan.serialize() });
+          });
+        }, 5000);
+      });
+    } else {
+      utils.sendJson(res, { error: "No Such Account" });
+    }
   } else {
     utils.sendJson(res, { error: "Not Authorized" });
   }

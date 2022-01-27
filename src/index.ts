@@ -822,6 +822,13 @@ class GitHubRepo {
   }
 }
 
+type CreateRepoParams = {
+  name: string;
+  description?: string;
+  init?: boolean;
+  license?: string;
+};
+
 class GitHubAccount {
   envTokenName: string = "";
   envTokenFullName: string = "";
@@ -837,6 +844,41 @@ class GitHubAccount {
     this.envTokenName = envTokenName;
     this.envTokenFullName = this.envTokenName + "_GITHUB_TOKEN_FULL";
     this.token = process.env[this.envTokenFullName];
+  }
+
+  createRepo(params: CreateRepoParams) {
+    const name = params.name;
+    const description = params.description || params.name;
+    const auto_init = !!params.init;
+    const license_template = params.init ? params.license || "MIT" : undefined;
+
+    return new Promise((resolve) => {
+      // https://octokit.github.io/rest.js/v18#repos-create-for-authenticated-user
+      this.octokit.rest.repos
+        .createForAuthenticatedUser({
+          name,
+          description,
+          auto_init,
+          license_template,
+        })
+        .then((result) => {
+          resolve(result);
+        });
+    });
+  }
+
+  deleteRepo(name: string) {
+    return new Promise((resolve) => {
+      // https://octokit.github.io/rest.js/v18#repos-delete
+      this.octokit.rest.repos
+        .delete({
+          owner: this.gitUserName,
+          repo: name,
+        })
+        .then((result) => {
+          resolve(result);
+        });
+    });
   }
 
   getRepos() {
@@ -1009,6 +1051,30 @@ export function interpreter(argv) {
         const repos = await acc.getRepos();
 
         resolve(repos);
+      } else {
+        resolve({ error: "no such account", gitUserName: argv.user });
+      }
+    }
+
+    if (command == "createrepo") {
+      const acc = gitMan.getAccountByGitUserName(argv.user);
+
+      if (acc) {
+        const result = acc.createRepo({ name: argv.name, init: !!argv.init });
+
+        resolve(result);
+      } else {
+        resolve({ error: "no such account", gitUserName: argv.user });
+      }
+    }
+
+    if (command == "deleterepo") {
+      const acc = gitMan.getAccountByGitUserName(argv.user);
+
+      if (acc) {
+        const result = acc.deleteRepo(argv.name);
+
+        resolve(result);
       } else {
         resolve({ error: "no such account", gitUserName: argv.user });
       }

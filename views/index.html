@@ -125,6 +125,19 @@
           </a>
         </td>
         <td>
+          <button
+            @click="createrepo(account.gitUserName, false)"
+            style="background-color: #afa"
+          >
+            Create Empty Repo
+          </button>
+          <button
+            @click="createrepo(account.gitUserName, true)"
+            style="margin-left: 10px; background-color: #ffa"
+          >
+            Create Initialized Repo
+          </button>
+          <hr />
           <table>
             <tr v-for="(repo, index) in account.repos">
               <td>{{ index + 1 }}</td>
@@ -144,6 +157,14 @@
                 {{ repo.forks ? `-> ${repo.forks}` : "" }}
               </td>
               <td style="color: #770">> {{ repo.pushedAt }}</td>
+              <td>
+                <button
+                  @click="deleterepo(account.gitUserName, repo)"
+                  style="background-color: #faa"
+                >
+                  Del
+                </button>
+              </td>
             </tr>
           </table>
         </td>
@@ -226,6 +247,40 @@
   Vue.createApp({
     computed: {},
     methods: {
+      createrepo(gitUserName, init) {
+        const name = window.prompt("Name");
+        if (name) {
+          post("createrepo", {
+            gitUserName,
+            name,
+            init,
+          }).then((result) => {
+            if (result.error) {
+              window.alert(result.error);
+            } else {
+              this.gitMan = result.gitMan;
+            }
+          });
+        }
+      },
+      deleterepo(gitUserName, repo) {
+        const confirm = window.prompt(`Type "${repo.name}" To Delete`);
+
+        if (confirm === repo.name) {
+          post("deleterepo", {
+            gitUserName,
+            name: repo.name,
+          }).then((result) => {
+            if (result.error) {
+              window.alert(result.error);
+            } else {
+              this.gitMan = result.gitMan;
+            }
+          });
+        } else {
+          window.alert("Deletion Canceled");
+        }
+      },
       uploadconfig() {
         post("setconfig", {
           name: this.params.appName,

@@ -1,3 +1,5 @@
+import { Octokit, App } from "octokit";
+
 import fetch from "node-fetch";
 import fs from "fs";
 
@@ -761,6 +763,52 @@ class HerokuAppManager {
   }
 }
 
+class GitHubAccount {
+  envTokenName: string = "";
+  envTokenFullName: string = "";
+  token: string = "";
+  gitUserName: string = "";
+  id: string = "";
+  avatarUrl: string = "";
+  gitUrl: string = "";
+  octokit: any = undefined;
+
+  constructor(envTokenName) {
+    this.envTokenName = envTokenName;
+    this.envTokenFullName = this.envTokenName + "_GITHUB_TOKEN_FULL";
+    this.token = process.env[this.envTokenFullName];
+  }
+
+  init() {
+    return new Promise((resolve) => {
+      this.octokit = new Octokit({ auth: this.token });
+
+      this.octokit.rest.users.getAuthenticated().then((result) => {
+        if (result.status === 200) {
+          const acc = result.data;
+          this.gitUserName = acc.login;
+          this.id = acc.id;
+          this.avatarUrl = acc.avatar_url;
+          this.gitUrl = acc.html_url;
+          resolve(this.serialize());
+        } else {
+          resolve({ error: result.status });
+        }
+      });
+    });
+  }
+
+  serialize() {
+    return {
+      envTokenName: this.envTokenName,
+      gitUserName: this.gitUserName,
+      id: this.id,
+      avatarUrl: this.avatarUrl,
+      gitUrl: this.gitUrl,
+    };
+  }
+}
+
 export const appMan = new HerokuAppManager();
 
 export function uploadTargz() {
@@ -846,3 +894,9 @@ export function interpreter(argv) {
 if (require.main === module) {
   interpreter(argv);
 }
+
+/*const g = new GitHubAccount("PYTHONIDEAS")
+
+g.init().then(result => {
+  console.log(result)
+})*/

@@ -120,7 +120,30 @@
     <table class="accounts">
       <tr v-for="account in gitMan.accounts">
         <td style="font-weight: bold; color: #700; text-align: center">
-          {{ account.gitUserName }}
+          <a rel="noopener noreferrer" target="_blank" :href="account.gitUrl">
+            {{ account.gitUserName }}
+          </a>
+        </td>
+        <td>
+          <table>
+            <tr v-for="repo in account.repos">
+              <td>
+                <a
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  :href="repo.repoUrl"
+                >
+                  {{ repo.name }}
+                </a>
+              </td>
+              <td style="text-align: center; color: #070; font-weight: bold">
+                {{ repo.stars ? `* ${repo.stars}` : "" }}
+              </td>
+              <td style="text-align: center; color: #707; font-weight: bold">
+                {{ repo.forks ? `> ${repo.forks}` : "" }}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>

@@ -11,6 +11,7 @@ import {
 export { fetch };
 
 import { startServer } from "./server";
+import { setTransitionHooks, toHandlers } from "vue";
 
 const argv = require("minimist")(process.argv.slice(2));
 
@@ -777,6 +778,38 @@ class HerokuAppManager {
   }
 }
 
+class GitHubRepo {
+  name: string = "";
+  id: number = 0;
+  fullName: string = "";
+  private: boolean = false;
+  repoUrl: string = "";
+  stars: number = 0;
+  forks: number = 0;
+
+  constructor(blob: any) {
+    this.name = blob.name;
+    this.id = blob.id;
+    this.fullName = blob.fullName;
+    this.private = blob.private;
+    this.repoUrl = blob.html_url;
+    this.stars = blob.stargazers_count;
+    this.forks = blob.forks;
+  }
+
+  serialize() {
+    return {
+      name: this.name,
+      id: this.id,
+      fullName: this.fullName,
+      private: this.private,
+      repoUrl: this.repoUrl,
+      stars: this.stars,
+      forks: this.forks,
+    };
+  }
+}
+
 class GitHubAccount {
   envTokenName: string = "";
   envTokenFullName: string = "";
@@ -786,11 +819,30 @@ class GitHubAccount {
   avatarUrl: string = "";
   gitUrl: string = "";
   octokit: any = undefined;
+  repos: GitHubRepo[] = [];
 
   constructor(envTokenName) {
     this.envTokenName = envTokenName;
     this.envTokenFullName = this.envTokenName + "_GITHUB_TOKEN_FULL";
     this.token = process.env[this.envTokenFullName];
+  }
+
+  getRepos() {
+    return new Promise((resolve) => {
+      this.octokit.rest.repos
+        .listForUser({ username: this.gitUserName })
+        .then((result) => {
+          if (result.data) {
+            this.repos = result.data.map((repo) => new GitHubRepo(repo));
+
+            resolve(this.repos.map((repo) => repo.serialize()));
+          } else {
+            syslog("ERROR", "could not get repos for", this.gitUserName);
+
+            resolve([]);
+          }
+        });
+    });
   }
 
   init() {
@@ -804,7 +856,9 @@ class GitHubAccount {
           this.id = acc.id;
           this.avatarUrl = acc.avatar_url;
           this.gitUrl = acc.html_url;
-          resolve(this.serialize());
+          this.getRepos().then((result) => {
+            resolve(this.serialize());
+          });
         } else {
           resolve({ error: result.status });
         }
@@ -819,6 +873,7 @@ class GitHubAccount {
       id: this.id,
       avatarUrl: this.avatarUrl,
       gitUrl: this.gitUrl,
+      repos: this.repos.map((repo) => repo.serialize()),
     };
   }
 }
@@ -826,6 +881,9 @@ class GitHubAccount {
 class GitHubAccountManager {
   accounts: GitHubAccount[] = [];
   constructor() {}
+  getAccountByGitUserName(gitUserName) {
+    return this.accounts.find((acc) => acc.gitUserName === gitUserName);
+  }
   serialize() {
     return {
       accounts: this.accounts.map((acc) => acc.serialize()),
@@ -929,12 +987,24 @@ export function interpreter(argv) {
       return;
     }
 
-    syslog("ERROR", "unknwon command", command);
+    if (command == "repos") {
+      const acc = gitMan.getAccountByGitUserName(argv.user);
+
+      if (acc) {
+        const repos = await acc.getRepos();
+
+        resolve(repos);
+      } else {
+        resolve({ error: "no such account", gitUserName: argv.user });
+      }
+    }
 
     resolve({ error: "unknown command", command });
   });
 }
 
 if (require.main === module) {
-  interpreter(argv);
+  interpreter(argv).then((result) => {
+    console.log(result);
+  });
 }

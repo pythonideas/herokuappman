@@ -122,6 +122,22 @@
       placeholder="Filter by Repo Name"
       style="font-family: monospace; font-size: 16px"
     />
+    <select
+      v-model="sortReposBy"
+      style="
+        font-family: monospace;
+        margin-left: 10px;
+        font-size: 16px;
+        padding: 3px;
+      "
+    >
+      <option
+        v-for="sortCriteria in sortReposByCriteria"
+        :value="sortCriteria.value"
+      >
+        {{ sortCriteria.display }}
+      </option>
+    </select>
     <hr />
     <table class="accounts">
       <tr v-for="account in gitMan.accounts">
@@ -144,49 +160,50 @@
             Create Initialized Repo
           </button>
           <hr />
-
-          <table>
-            <tr
-              v-for="(repo, index) in account.repos.filter(repo => repo.name.match(new RegExp(filterrepo)))"
-            >
-              <td>{{ index + 1 }}</td>
-              <td>
-                <a
-                  rel="noopener noreferrer"
-                  target="_blank"
-                  :href="repo.repoUrl"
-                >
-                  {{ repo.name }}
-                </a>
-              </td>
-              <td style="text-align: center; color: #070; font-weight: bold">
-                {{ repo.stars ? `* ${repo.stars}` : "" }}
-              </td>
-              <td style="text-align: center; color: #707; font-weight: bold">
-                {{ repo.forks ? `-> ${repo.forks}` : "" }}
-              </td>
-              <td style="color: #770">> {{ repo.pushedAt }}</td>
-              <td>
-                <select @change="forkat($event, account, repo)">
-                  <option value="">Fork At</option>
-                  <option
-                    v-for="account in gitMan.accounts"
-                    :value="account.gitUserName"
+          <div style="max-height: 300px; overflow-y: scroll">
+            <table>
+              <tr
+                v-for="(repo, index) in account.repos.filter(repo => repo.name.match(new RegExp(filterrepo))).sort(sortReposFunc)"
+              >
+                <td>{{ index + 1 }}</td>
+                <td>
+                  <a
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    :href="repo.repoUrl"
                   >
-                    {{ account.gitUserName }}
-                  </option>
-                </select>
-              </td>
-              <td>
-                <button
-                  @click="deleterepo(account.gitUserName, repo)"
-                  style="background-color: #faa"
-                >
-                  Del
-                </button>
-              </td>
-            </tr>
-          </table>
+                    {{ repo.name }}
+                  </a>
+                </td>
+                <td style="text-align: center; color: #070; font-weight: bold">
+                  {{ repo.stars ? `* ${repo.stars}` : "" }}
+                </td>
+                <td style="text-align: center; color: #707; font-weight: bold">
+                  {{ repo.forks ? `-> ${repo.forks}` : "" }}
+                </td>
+                <td style="color: #770">> {{ repo.pushedAt }}</td>
+                <td>
+                  <select @change="forkat($event, account, repo)">
+                    <option value="">Fork At</option>
+                    <option
+                      v-for="account in gitMan.accounts"
+                      :value="account.gitUserName"
+                    >
+                      {{ account.gitUserName }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <button
+                    @click="deleterepo(account.gitUserName, repo)"
+                    style="background-color: #faa"
+                  >
+                    Del
+                  </button>
+                </td>
+              </tr>
+            </table>
+          </div>
         </td>
       </tr>
     </table>
@@ -267,6 +284,16 @@
   Vue.createApp({
     computed: {},
     methods: {
+      sortReposFunc(a, b) {
+        if (this.sortReposBy === "pushedat")
+          return (
+            new Date(b.pushedAt).getTime() - new Date(a.pushedAt).getTime()
+          );
+        if (this.sortReposBy === "stars") return b.stars - a.stars;
+        if (this.sortReposBy === "forks") return b.forks - a.forks;
+
+        return a.name.localeCompare(b.name);
+      },
       forkat(ev, account, repo) {
         const gitUserName = ev.target.value;
         ev.target.value = "";
@@ -393,6 +420,13 @@
         gitMan: { accounts: [] },
         params: {},
         filterrepo: "",
+        sortReposBy: "pushedat",
+        sortReposByCriteria: [
+          { value: "pushedat", display: "Sort repos by most recent push" },
+          { value: "alphabetical", display: "Sort repos alphabetically" },
+          { value: "stars", display: "Sort repos by stars" },
+          { value: "forks", display: "Sort repos by forks" },
+        ],
       };
     },
     mounted() {
